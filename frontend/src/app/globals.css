@@ -1,36 +1,50 @@
 @import "tailwindcss";
 
 /*
- * radius design tokens
- * Warm white + charcoal, with blue and orange used sparingly.
+ * radius design tokens: neo-brutalist retro.
+ * Cream paper, ink outlines, hard offset shadows and flat, confident colour.
  */
 @theme {
-  --color-canvas: #f7f6f2;
-  --color-surface: #ffffff;
-  --color-sunken: #efede7;
-  --color-ink: #171717;
-  --color-ink-soft: #3a3a3a;
-  --color-muted: #6b6b6b;
-  --color-line: #e5e3de;
-  --color-line-strong: #d4d1c9;
-  --color-accent: #2563eb;
-  --color-accent-soft: #e8eefc;
-  --color-warm: #f59e0b;
-  --color-warm-ink: #b45309; /* orange text: passes contrast on light backgrounds */
-  --color-warm-soft: #fdf3e2;
-  --color-success: #16a34a;
-  --color-success-ink: #15803d;
-  --color-danger: #b42318;
+  --color-canvas: #fff6e5;
+  --color-surface: #fffdf8;
+  --color-sunken: #f5e9d2;
+  --color-ink: #121212;
+  --color-ink-soft: #2d2a26;
+  --color-muted: #5f5a51; /* passes AA on canvas */
+  --color-line: #e8dcc4;
+  --color-line-strong: #cdbf9f;
+  --color-accent: #3355ff;
+  --color-accent-soft: #e3e8ff;
+  --color-warm: #ffc233;
+  --color-warm-ink: #8a5300; /* orange text on light backgrounds */
+  --color-warm-soft: #fff0c2;
+  --color-success: #11a36a;
+  --color-success-ink: #0b7a4f;
+  --color-danger: #c62f1c;
 
-  --font-display: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* Retro palette */
+  --color-tomato: #ff6b4a;
+  --color-mustard: #ffc233;
+  --color-teal: #22b8a6;
+  --color-lilac: #b9a2ff;
+  --color-pink: #ff9ec7;
+  --color-mint: #a8ecc8;
+  --color-sky: #8fd3ff;
+
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-space-mono), ui-monospace, monospace;
 
   --radius-btn: 10px;
   --radius-card: 14px;
   --radius-panel: 18px;
 
-  --shadow-soft: 0 1px 2px rgb(23 23 23 / 0.04), 0 1px 1px rgb(23 23 23 / 0.03);
-  --shadow-lift: 0 8px 24px -12px rgb(23 23 23 / 0.18), 0 1px 2px rgb(23 23 23 / 0.05);
+  /* Hard shadows are the signature; soft ones stay for overlays. */
+  --shadow-brutal-sm: 2px 2px 0 0 var(--color-ink);
+  --shadow-brutal: 4px 4px 0 0 var(--color-ink);
+  --shadow-brutal-lg: 7px 7px 0 0 var(--color-ink);
+  --shadow-soft: 2px 2px 0 0 var(--color-ink);
+  --shadow-lift: 6px 6px 0 0 var(--color-ink);
 
   --animate-rise: rise 480ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   --animate-fade: fade 360ms ease-out both;
@@ -74,6 +88,12 @@
   }
 }
 
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 @keyframes pulse-dot {
   0%,
   100% {
@@ -103,7 +123,7 @@
   h3,
   h4 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
     text-wrap: balance;
   }
 
@@ -112,23 +132,25 @@
   }
 
   ::selection {
-    background: var(--color-accent-soft);
+    background: var(--color-mustard);
+    color: var(--color-ink);
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
+    outline: 3px solid var(--color-accent);
+    outline-offset: 3px;
     border-radius: 4px;
   }
 }
 
 @layer components {
-  /* Small uppercase section label used across the product. */
+  /* Small uppercase section label used across the product: typewriter mono. */
   .eyebrow {
+    font-family: var(--font-mono);
     font-size: 0.75rem;
     line-height: 1rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
+    font-weight: 700;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--color-muted);
   }
@@ -138,6 +160,23 @@
     stroke-dasharray: var(--len);
     stroke-dashoffset: var(--len);
     animation: draw 900ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  /* The neo-brutalist card: ink outline and a hard offset shadow. */
+  .brutal {
+    border: 2.5px solid var(--color-ink);
+    box-shadow: var(--shadow-brutal);
+  }
+
+  /* Retro dotted paper. */
+  .dot-grid {
+    background-image: radial-gradient(color-mix(in oklab, var(--color-ink) 18%, transparent) 1.2px, transparent 1.2px);
+    background-size: 18px 18px;
+  }
+
+  /* Infinite ticker: content is rendered twice and slid by half its width. */
+  .marquee-track {
+    animation: marquee var(--marquee-duration, 36s) linear infinite;
   }
 
   .dot-pending {
@@ -155,5 +194,8 @@
   }
   .edge-draw {
     stroke-dashoffset: 0;
+  }
+  .marquee-track {
+    animation: none;
   }
 }
