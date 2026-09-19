@@ -1,33 +1,37 @@
 "use client";
 
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { HeroGraph } from "@/components/network/HeroGraph";
 
-/** lottie-web touches the DOM when it loads, so it only ever runs in the browser. */
-const Lottie = dynamic(() => import("lottie-react").then((m) => m.Lottie), { ssr: false });
+/** The dotLottie player draws on a canvas with WebAssembly, so it only ever runs in the browser. */
+const DotLottieReact = dynamic(() => import("@lottiefiles/dotlottie-react").then((m) => m.DotLottieReact), { ssr: false });
 
-/** Where the landing animation lives. Drop a Lottie JSON file here to use it. */
-const LOTTIE_URL = "/lottie/hero.json";
+/** Where the landing animation lives: drop hero.lottie (preferred) or hero.json into public/lottie/. */
+const LOTTIE_CANDIDATES = ["/lottie/hero.lottie", "/lottie/hero.json"];
 
-type LottieState = { status: "loading" } | { status: "ready"; data: object } | { status: "missing" };
+type LottieState = { status: "loading" } | { status: "ready"; src: string } | { status: "missing" };
 
-function useLottieFile(url: string): LottieState {
+/** Finds the first animation file that exists, without downloading it twice. */
+function useLottieSource(candidates: readonly string[]): LottieState {
   const [state, setState] = useState<LottieState>({ status: "loading" });
   useEffect(() => {
     let active = true;
-    fetch(url)
-      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
-      .then((data: unknown) => {
-        const valid = typeof data === "object" && data !== null && "layers" in data;
-        if (active) setState(valid ? { status: "ready", data: data as object } : { status: "missing" });
-      })
-      .catch(() => active && setState({ status: "missing" }));
+    (async () => {
+      for (const url of candidates) {
+        const res = await fetch(url, { method: "HEAD" }).catch(() => null);
+        if (res?.ok) {
+          if (active) setState({ status: "ready", src: url });
+          return;
+        }
+      }
+      if (active) setState({ status: "missing" });
+    })();
     return () => {
       active = false;
     };
-  }, [url]);
+  }, [candidates]);
   return state;
 }
 
@@ -63,7 +67,11 @@ function Sticker({ children, className, delay, rotate }: StickerProps) {
  * (or the collaboration graph until one is added), with skill stickers around it.
  */
 export function HeroVisual() {
-  const lottie = useLottieFile(LOTTIE_URL);
+  const lottie = useLottieSource(LOTTIE_CANDIDATES);
+  const reduced = useReducedMotion();
+  // A file that exists but fails to play (corrupt, wrong format) falls back to the graph too.
+  const [playerFailed, setPlayerFailed] = useState(false);
+  const showAnimation = lottie.status === "ready" && !playerFailed;
 
   return (
     <div className="relative mx-auto w-full max-w-[560px] px-3 pb-10 pt-6 sm:px-6">
@@ -80,9 +88,17 @@ export function HeroVisual() {
           <span className="ml-3 font-mono text-xs font-bold">radius.app / finding-your-people</span>
         </div>
         <div className="dot-grid relative aspect-[5/4] bg-mint/40">
-          {lottie.status === "ready" ? (
-            <Lottie src={lottie.data} autoplay loop className="absolute inset-0 h-full w-full" aria-label="People connecting around an idea" role="img" />
-          ) : lottie.status === "missing" ? (
+          {showAnimation ? (
+            <DotLottieReact
+              src={lottie.src}
+              autoplay={!reduced}
+              loop
+              className="absolute inset-0 h-full w-full"
+              role="img"
+              aria-label="People connecting around an idea"
+              dotLottieRefCallback={(player) => player?.addEventListener("loadError", () => setPlayerFailed(true))}
+            />
+          ) : lottie.status === "missing" || playerFailed ? (
             <div className="absolute inset-0 flex items-center justify-center p-6">
               <HeroGraph />
             </div>
