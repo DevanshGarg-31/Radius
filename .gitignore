@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+
+# build output
+backend/dist/
+frontend/.next/
+frontend/out/
+*.tsbuildinfo
+
+# secrets - never commit
+.env
+.env.*
+!.env.example
+*.pem
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# logs
+npm-debug.log*
+coverage/
