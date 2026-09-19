@@ -122,6 +122,11 @@ export interface TeamGaps {
   source: AiSource;
 }
 
+export type Invitation = CollaborationRequest & {
+  project?: Pick<Project, "projectId" | "title" | "description" | "category" | "requiredRoles">;
+  fromUser?: UserSummary;
+};
+
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -150,16 +155,11 @@ async function request<T>(method: string, path: string, options: { userId?: stri
 export const api = {
   health: () => request<{ ok: boolean; services: Record<string, unknown> }>("GET", "/health"),
 
-  demoLogin: (username: string) => request<{ user: User }>("POST", "/auth/demo-login", { body: { username } }),
+  demoLogin: (who: { userId?: string; username?: string }) => request<{ user: User }>("POST", "/auth/demo-login", { body: who }),
   listUsers: () => request<{ users: UserSummary[] }>("GET", "/users"),
   getUser: (userId: string) => request<{ user: User }>("GET", `/users/${userId}`),
   updateUser: (userId: string, patch: Partial<User>) => request<{ user: User }>("PUT", `/users/${userId}`, { userId, body: patch }),
-  myInvitations: (userId: string) =>
-    request<{ requests: Array<CollaborationRequest & { project?: Pick<Project, "projectId" | "title" | "description" | "category" | "requiredRoles">; fromUser?: UserSummary }> }>(
-      "GET",
-      `/users/${userId}/requests`,
-      { userId },
-    ),
+  myInvitations: (userId: string) => request<{ requests: Invitation[] }>("GET", `/users/${userId}/requests`, { userId }),
 
   listProjects: (filter: { ownerId?: string; memberId?: string; status?: string } = {}) => {
     const qs = new URLSearchParams(Object.entries(filter).filter(([, v]) => v) as [string, string][]).toString();

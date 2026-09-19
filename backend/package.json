@@ -1,0 +1,42 @@
+{
+  "name": "radius-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Radius collaboration network API (AWS Lambda + API Gateway)",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx watch scripts/local-server.ts",
+    "dev:memory": "tsx watch scripts/local-server.ts --memory",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "node scripts/build.mjs",
+    "create-indices": "tsx scripts/create-indices.ts",
+    "seed": "tsx scripts/seed.ts",
+    "deploy": "npm run build && aws lambda update-function-code --function-name radius-api --zip-file fileb://dist/lambda.zip"
+  },
+  "dependencies": {
+    "@anthropic-ai/bedrock-sdk": "^0.33.7",
+    "@anthropic-ai/sdk": "^0.127.0",
+    "@aws-sdk/client-dynamodb": "^3.1136.0",
+    "@aws-sdk/client-s3": "^3.1136.0",
+    "@aws-sdk/credential-provider-node": "^3.972.83",
+    "@aws-sdk/lib-dynamodb": "^3.1136.0",
+    "@aws-sdk/s3-request-presigner": "^3.1136.0",
+    "@opensearch-project/opensearch": "^3.6.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/archiver": "^8.0.0",
+    "@types/aws-lambda": "^8.10.163",
+    "@types/node": "^26.6.2",
+    "archiver": "^8.0.0",
+    "dotenv": "^18.0.1",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.1"
+  }
+}
