@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { Handler } from "../router.js";
 import { presignDownload, presignUpload, isStorageEnabled } from "../services/s3.js";
-import { requireCaller } from "../utils/auth.js";
+import { requireAccount } from "../utils/auth.js";
 import { badRequest, HttpError, json, redirect, parseBody } from "../utils/http.js";
 import { newId } from "../utils/ids.js";
 
@@ -27,9 +27,10 @@ function requireStorage(): void {
  */
 export const presign: Handler = async (req) => {
   requireStorage();
-  const caller = await requireCaller(req);
+  // Profile photos are uploaded while creating a profile, so only an account is needed.
+  const account = await requireAccount(req);
   const { kind, contentType } = parseBody(req.event, PresignInput);
-  const key = `${kind}s/${caller.userId}/${newId("f")}.${EXTENSIONS[contentType]}`;
+  const key = `${kind}s/${account.sub}/${newId("f")}.${EXTENSIONS[contentType]}`;
   const uploadUrl = await presignUpload(key, contentType);
   return json(200, { uploadUrl, key, assetPath: `/assets/${key}`, method: "PUT", headers: { "Content-Type": contentType } });
 };

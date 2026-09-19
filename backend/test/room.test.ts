@@ -27,7 +27,7 @@ async function call(method: string, path: string, opts: { as?: string; body?: un
     version: "2.0",
     rawPath,
     queryStringParameters: qs ? Object.fromEntries(new URLSearchParams(qs)) : undefined,
-    headers: opts.as ? { "x-user-id": opts.as } : {},
+    headers: opts.as ? { authorization: `Bearer dev:${opts.as}` } : {},
     body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
     requestContext: { http: { method }, requestId: "test", stage: "$default" },
   } as unknown as APIGatewayProxyEventV2;
@@ -81,8 +81,8 @@ describe("team room", () => {
   it("stores messages and pushes them to connected members", async () => {
     const team = await formTeam();
     await team.addRahul();
-    expect((await ws("c-outsider", "CONNECT", { projectId: team.projectId, userId: "u003" })).statusCode).toBe(403);
-    expect((await ws("c-rahul", "CONNECT", { projectId: team.projectId, userId: "u002" })).statusCode).toBe(200);
+    expect((await ws("c-outsider", "CONNECT", { projectId: team.projectId, token: "dev:u003" })).statusCode).toBe(403);
+    expect((await ws("c-rahul", "CONNECT", { projectId: team.projectId, token: "dev:u002" })).statusCode).toBe(200);
 
     const sent = await call("POST", `/projects/${team.projectId}/messages`, { as: "u001", body: { text: "  Welcome aboard!  " } });
     expect(sent.status).toBe(201);
@@ -108,7 +108,7 @@ describe("team room", () => {
   it("starts one call per team and lets others join it", async () => {
     const team = await formTeam();
     await team.addRahul();
-    await ws("c-rahul", "CONNECT", { projectId: team.projectId, userId: "u002" });
+    await ws("c-rahul", "CONNECT", { projectId: team.projectId, token: "dev:u002" });
 
     const first = await call("POST", `/projects/${team.projectId}/call`, { as: "u001" });
     expect(first.status).toBe(200);

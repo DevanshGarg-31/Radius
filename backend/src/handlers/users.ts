@@ -1,11 +1,10 @@
-import { z } from "zod";
 import type { Handler } from "../router.js";
-import { UserProfileInput, UserUpdateInput, toSummary, type User } from "../models/user.js";
+import { CreateProfileInput, UserUpdateInput, toSummary, type User } from "../models/user.js";
 import { db } from "../services/store.js";
 import { indexUser } from "../services/opensearch.js";
-import { requireCaller } from "../utils/auth.js";
+import { requireAccount, requireCaller } from "../utils/auth.js";
 import { conflict, forbidden, json, notFound, parseBody } from "../utils/http.js";
-import { newId, nowIso } from "../utils/ids.js";
+import { nowIso } from "../utils/ids.js";
 import { errorFields, log } from "../utils/logger.js";
 import { uniqueCanonical } from "../utils/skills.js";
 
@@ -20,42 +19,48 @@ async function reindex(user: User): Promise<void> {
   }
 }
 
-const DemoLoginInput = z.object({ userId: z.string().optional(), username: z.string().optional() }).refine((v) => v.userId || v.username, "userId or username is required");
-
-export const demoLogin: Handler = async (req) => {
-  const body = parseBody(req.event, DemoLoginInput);
-  const user = body.userId ? await db.getUser(body.userId) : await db.findUserByUsername(body.username!);
-  if (!user) throw notFound("User");
-  return json(200, { user });
+/** GET /me - who is signed in, and their profile (null until they create one). */
+export const getMe: Handler = async (req) => {
+  const account = await requireAccount(req);
+  const user = await db.getUser(account.sub);
+  return json(200, { account: { email: account.email, name: account.name ?? "" }, user: user ?? null });
 };
 
-export const listUsers: Handler = async () => {
-  const users = await db.listUsers();
-  return json(200, { users: users.map(toSummary).sort((a, b) => a.name.localeCompare(b.name)) });
-};
-
-export const getUser: Handler = async (req) => {
-  const user = await db.getUser(req.params.userId!);
-  if (!user) throw notFound("User");
-  return json(200, { user });
-};
-
-export const createUser: Handler = async (req) => {
-  const input = parseBody(req.event, UserProfileInput);
-  if (await db.findUserByUsername(input.username)) throw conflict("Username is already taken");
+/** POST /me/profile - creates the signed-in person's profile. Their userId is their Cognito id. */
+export const createMyProfile: Handler = async (req) => {
+  const account = await requireAccount(req);
+  if (await db.getUser(account.sub)) throw conflict("You already have a profile");
+  const input = parseBody(req.event, CreateProfileInput);
+  const taken = await db.findUserByUsername(input.username);
+  if (taken) throw conflict("That username is taken. Try another.");
   const now = nowIso();
   const user: User = {
     ...input,
+    email: account.email,
     skills: tidyList(input.skills),
     interests: tidyList(input.interests),
     availability: tidyList(input.availability),
-    userId: newId("u"),
+    userId: account.sub,
     createdAt: now,
     updatedAt: now,
   };
   await db.putUser(user);
   await reindex(user);
   return json(201, { user });
+};
+
+export const listUsers: Handler = async (req) => {
+  await requireAccount(req);
+  const users = await db.listUsers();
+  return json(200, { users: users.map(toSummary).sort((a, b) => a.name.localeCompare(b.name)) });
+};
+
+/** A profile as others see it (no email). */
+export const getUser: Handler = async (req) => {
+  const account = await requireAccount(req);
+  const user = await db.getUser(req.params.userId!);
+  if (!user) throw notFound("User");
+  return json(200, { user: user.userId === account.sub ? user : { ...user, email: "" } });
 };
 
 export const updateUser: Handler = async (req) => {
@@ -70,6 +75,7 @@ export const updateUser: Handler = async (req) => {
     availability: tidyList(patch.availability ?? caller.availability),
     userId: caller.userId,
     username: caller.username,
+    email: caller.email,
     createdAt: caller.createdAt,
     updatedAt: nowIso(),
   };

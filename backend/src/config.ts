@@ -28,6 +28,14 @@ export const config = {
     modelId: env("BEDROCK_MODEL_ID", "global.anthropic.claude-sonnet-4-6"),
     enabled: env("BEDROCK_ENABLED", "true") !== "false",
   },
+  auth: {
+    /** Cognito user pool that issues ID tokens (e.g. us-east-1_AbC123). */
+    userPoolId: env("COGNITO_USER_POOL_ID"),
+    /** The web app client id tokens must be issued to. */
+    clientId: env("COGNITO_CLIENT_ID"),
+    /** Accept "dev:<userId>" tokens. Tests only; never set this in Lambda. */
+    devTokens: env("AUTH_DEV_TOKENS") === "true",
+  },
   corsOrigin: env("CORS_ORIGIN", "*"),
   /** "memory" keeps all data in-process (local development and tests only). */
   dataStore: env("DATA_STORE", "dynamodb"),

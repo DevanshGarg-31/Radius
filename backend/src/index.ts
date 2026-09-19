@@ -6,16 +6,16 @@ import { createRequest, listProjectRequests, updateRequest } from "./handlers/re
 import { getRoom, handleWebSocket, joinCall, listMessages, sendMessage } from "./handlers/room.js";
 import { createTeam, getTeam, getTeamGaps } from "./handlers/teams.js";
 import { getAsset, presign } from "./handlers/uploads.js";
-import { createUser, demoLogin, getUser, listUserRequests, listUsers, updateUser } from "./handlers/users.js";
+import { createMyProfile, getMe, getUser, listUserRequests, listUsers, updateUser } from "./handlers/users.js";
 import { Router } from "./router.js";
 import { corsHeaders, errorResponse, HttpError } from "./utils/http.js";
 import { errorFields, log, setLogContext } from "./utils/logger.js";
 
 export const router = new Router()
   .get("/health", health)
-  .post("/auth/demo-login", demoLogin)
+  .get("/me", getMe)
+  .post("/me/profile", createMyProfile)
   .get("/users", listUsers)
-  .post("/users", createUser)
   .get("/users/:userId", getUser)
   .put("/users/:userId", updateUser)
   .get("/users/:userId/requests", listUserRequests)
@@ -62,7 +62,7 @@ export async function handler(event: APIGatewayProxyEventV2 | WebSocketEvent, co
     return { statusCode: 204, headers: corsHeaders };
   }
   const { route, run } = router.resolve(event);
-  setLogContext({ requestId: context?.awsRequestId ?? event.requestContext.requestId, route, userId: event.headers?.["x-user-id"] });
+  setLogContext({ requestId: context?.awsRequestId ?? event.requestContext.requestId, route });
 
   let response: APIGatewayProxyStructuredResultV2;
   try {

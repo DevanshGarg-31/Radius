@@ -6,7 +6,7 @@ import { toSummary } from "../models/user.js";
 import { analyzeProject as runAnalysis } from "../services/bedrock.js";
 import { db } from "../services/store.js";
 import { indexProject } from "../services/opensearch.js";
-import { assertOwner, requireCaller, requireProject } from "../utils/auth.js";
+import { assertOwner, requireAccount, requireCaller, requireProject } from "../utils/auth.js";
 import { json, parseBody } from "../utils/http.js";
 import { newId, nowIso, teamIdFor } from "../utils/ids.js";
 import { errorFields, log } from "../utils/logger.js";
@@ -60,6 +60,7 @@ export const createProject: Handler = async (req) => {
 
 /** GET /projects?ownerId=&memberId=&status= */
 export const listProjects: Handler = async (req) => {
+  await requireAccount(req);
   const { ownerId, memberId, status } = req.query;
   let projects: Project[];
   if (ownerId) {
@@ -76,6 +77,7 @@ export const listProjects: Handler = async (req) => {
 };
 
 export const getProject: Handler = async (req) => {
+  await requireAccount(req);
   const project = await requireProject(req.params.projectId);
   const owner = await db.getUser(project.ownerId);
   return json(200, { project: publicProject(project), owner: owner ? toSummary(owner) : undefined });

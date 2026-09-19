@@ -5,7 +5,7 @@ import { toSummary } from "../models/user.js";
 import { analyzeTeamGap } from "../services/bedrock.js";
 import { db } from "../services/store.js";
 import { buildMatchContext, missingSkills } from "../services/matching.js";
-import { assertOwner, requireCaller, requireProject } from "../utils/auth.js";
+import { assertOwner, requireAccount, requireCaller, requireProject } from "../utils/auth.js";
 import { conflict, json, parseBody } from "../utils/http.js";
 import { nowIso, teamIdFor } from "../utils/ids.js";
 import { keyOf } from "../utils/skills.js";
@@ -50,6 +50,7 @@ export const createTeam: Handler = async (req) => {
 
 /** GET /projects/{projectId}/team */
 export const getTeam: Handler = async (req) => {
+  await requireAccount(req);
   const project = await requireProject(req.params.projectId);
   const team = await loadTeam(project);
   const members = await teamMembers(team);

@@ -20,7 +20,12 @@ export const UserProfileInput = z.object({
 });
 export type UserProfileInput = z.infer<typeof UserProfileInput>;
 
-export const UserUpdateInput = UserProfileInput.partial().omit({ username: true });
+/** Creating your own profile: the email always comes from your verified sign-in, never the form. */
+export const CreateProfileInput = UserProfileInput.omit({ email: true }).extend({
+  skills: stringList(20).min(1, "Add at least one skill so people can find you"),
+});
+
+export const UserUpdateInput = UserProfileInput.partial().omit({ username: true, email: true });
 
 export interface User extends UserProfileInput {
   userId: string;

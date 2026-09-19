@@ -6,7 +6,7 @@ import { toSummary, type User } from "../models/user.js";
 import { createAttendee, createMeeting, findMeeting } from "../services/chime.js";
 import { broadcast, isRealtimeEnabled } from "../services/realtime.js";
 import { db } from "../services/store.js";
-import { requireCaller, requireProject } from "../utils/auth.js";
+import { requireCaller, requireProject, verifyToken } from "../utils/auth.js";
 import { conflict, forbidden, json, notFound, parseBody } from "../utils/http.js";
 import { newId, nowIso, teamIdFor } from "../utils/ids.js";
 import { errorFields, log } from "../utils/logger.js";
@@ -102,8 +102,8 @@ interface WebSocketEvent {
 const ok: APIGatewayProxyStructuredResultV2 = { statusCode: 200 };
 
 /**
- * Browsers can't send headers when opening a WebSocket, so the room and user
- * come in the query string: wss://.../prod?projectId=p_1&userId=u_1
+ * Browsers can't send headers when opening a WebSocket, so the room and the
+ * signed-in person's ID token come in the query string: wss://.../prod?projectId=p_1&token=eyJ…
  */
 export async function handleWebSocket(event: WebSocketEvent): Promise<APIGatewayProxyStructuredResultV2> {
   const { connectionId, eventType } = event.requestContext;
@@ -114,8 +114,14 @@ export async function handleWebSocket(event: WebSocketEvent): Promise<APIGateway
   if (eventType === "MESSAGE") return ok; // keep-alive pings; messages are sent over HTTPS
 
   const projectId = event.queryStringParameters?.projectId;
-  const userId = event.queryStringParameters?.userId;
-  if (!projectId || !userId) return { statusCode: 400 };
+  const token = event.queryStringParameters?.token;
+  if (!projectId || !token) return { statusCode: 400 };
+  let userId: string;
+  try {
+    userId = (await verifyToken(token)).sub;
+  } catch {
+    return { statusCode: 401 };
+  }
   const team = await db.getTeam(teamIdFor(projectId));
   if (!team?.members.includes(userId) || team.members.length < ROOM_MIN_MEMBERS) return { statusCode: 403 };
 
