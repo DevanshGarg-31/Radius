@@ -10,11 +10,9 @@ import { Button, ButtonLink } from "@/components/ui/Button";
 import { ErrorState, LoadingState } from "@/components/ui/States";
 import { useAsync } from "@/hooks/useAsync";
 import { useProject } from "@/hooks/useProject";
-import { useCurrentUser } from "@/lib/session";
 import { api, type TeamGaps } from "@/services/api";
 
 function TeamInner() {
-  const user = useCurrentUser();
   const project = useProject();
   const joined = useSearchParams().get("joined") ?? undefined;
   const team = useAsync(() => api.getTeam(project.projectId), [project.projectId]);
@@ -23,7 +21,7 @@ function TeamInner() {
   async function analyzeTeam() {
     setGaps({ status: "loading" });
     try {
-      setGaps({ status: "done", data: await api.getTeamGaps(user.userId, project.projectId) });
+      setGaps({ status: "done", data: await api.getTeamGaps(project.projectId) });
     } catch (error) {
       setGaps({ status: "error", error });
     }

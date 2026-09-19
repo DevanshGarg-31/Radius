@@ -7,20 +7,26 @@ import { LoadingState } from "@/components/ui/States";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { useSession } from "@/lib/session";
 
-/** Signed-in area: sends visitors to /login and brings them back afterwards. */
+/**
+ * Signed-in area. Visitors go to /login, and people who haven't created a
+ * profile yet go to /welcome; both come back here afterwards.
+ */
 export default function AppLayout({ children }: { children: ReactNode }) {
-  const { user } = useSession();
+  const { state } = useSession();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (user === null) router.replace(`/login?next=${encodeURIComponent(pathname)}`);
-  }, [user, router, pathname]);
+    const next = encodeURIComponent(pathname);
+    if (state.status === "signed-out") router.replace(`/login?next=${next}`);
+    if (state.status === "needs-profile") router.replace(`/welcome?next=${next}`);
+  }, [state.status, router, pathname]);
 
-  if (!user) {
+  if (state.status !== "ready") {
+    const message = state.status === "loading" ? "Opening your workspace…" : state.status === "needs-profile" ? "Let's set up your profile…" : "Taking you to sign in…";
     return (
       <PageContainer>
-        <LoadingState message={user === null ? "Taking you to sign in…" : "Opening your workspace…"} />
+        <LoadingState message={message} />
       </PageContainer>
     );
   }

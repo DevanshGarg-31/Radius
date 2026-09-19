@@ -75,7 +75,7 @@ function PendingInvitations({ userId }: { userId: string }) {
 }
 
 function PeopleToMeet({ project, userId }: { project: Project; userId: string }) {
-  const matches = useAsync(() => api.getMatches(userId, project.projectId), [project.projectId, userId]);
+  const matches = useAsync(() => api.getMatches(project.projectId), [project.projectId, userId]);
   return (
     <section aria-labelledby="meet" className="rounded-panel border-[2.5px] border-ink bg-lilac/40 p-6 shadow-brutal">
       <div className="mb-4 flex items-baseline justify-between gap-4">

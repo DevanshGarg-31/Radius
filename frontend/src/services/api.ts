@@ -1,6 +1,6 @@
 /**
  * Typed client for the Radius API (see docs/api.md).
- * Demo auth: the logged-in demo user's id is sent as the X-User-Id header.
+ * Every request carries the signed-in person's Cognito ID token as a Bearer token.
  */
 
 export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000").replace(/\/$/, "");
@@ -173,14 +173,25 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(method: string, path: string, options: { userId?: string; body?: unknown } = {}): Promise<T> {
+/** Supplies the signed-in person's Cognito ID token (refreshed automatically). Set by the session provider. */
+let tokenProvider: () => Promise<string | undefined> = async () => undefined;
+
+export function setTokenProvider(provider: () => Promise<string | undefined>): void {
+  tokenProvider = provider;
+}
+
+/** The current ID token, e.g. for opening the team-room WebSocket. */
+export const getIdToken = (): Promise<string | undefined> => tokenProvider();
+
+async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const token = await tokenProvider();
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method,
     headers: {
-      ...(options.body !== undefined ? { "Content-Type": "application/json" } : {}),
-      ...(options.userId ? { "X-User-Id": options.userId } : {}),
+      ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
     cache: "no-store",
   });
   const data = res.status === 204 ? undefined : await res.json().catch(() => undefined);
@@ -188,42 +199,43 @@ async function request<T>(method: string, path: string, options: { userId?: stri
   return data as T;
 }
 
+/** Fields a person fills in to create or edit their profile. */
+export type ProfileInput = Pick<User, "name" | "bio" | "avatarUrl" | "skills" | "interests" | "availability" | "experienceLevel" | "location"> & { username?: string; githubUrl?: string };
+
 export const api = {
   health: () => request<{ ok: boolean; services: Record<string, unknown> }>("GET", "/health"),
 
-  demoLogin: (who: { userId?: string; username?: string }) => request<{ user: User }>("POST", "/auth/demo-login", { body: who }),
+  getMe: () => request<{ account: { email: string; name: string }; user: User | null }>("GET", "/me"),
+  createProfile: (input: ProfileInput & { username: string }) => request<{ user: User }>("POST", "/me/profile", input),
+
   listUsers: () => request<{ users: UserSummary[] }>("GET", "/users"),
   getUser: (userId: string) => request<{ user: User }>("GET", `/users/${userId}`),
-  updateUser: (userId: string, patch: Partial<User>) => request<{ user: User }>("PUT", `/users/${userId}`, { userId, body: patch }),
-  myInvitations: (userId: string) => request<{ requests: Invitation[] }>("GET", `/users/${userId}/requests`, { userId }),
+  updateUser: (userId: string, patch: Partial<ProfileInput>) => request<{ user: User }>("PUT", `/users/${userId}`, patch),
+  myInvitations: (userId: string) => request<{ requests: Invitation[] }>("GET", `/users/${userId}/requests`),
 
   listProjects: (filter: { ownerId?: string; memberId?: string; status?: string } = {}) => {
     const qs = new URLSearchParams(Object.entries(filter).filter(([, v]) => v) as [string, string][]).toString();
     return request<{ projects: Project[] }>("GET", `/projects${qs ? `?${qs}` : ""}`);
   },
   getProject: (projectId: string) => request<{ project: Project; owner?: UserSummary }>("GET", `/projects/${projectId}`),
-  createProject: (userId: string, input: { title: string; description: string; teamSize?: number; location?: string; remote?: boolean }) =>
-    request<{ projectId: string; title: string; project: Project }>("POST", "/projects", { userId, body: input }),
-  analyzeProject: (userId: string, projectId: string) => request<Analysis>("POST", `/projects/${projectId}/analyze`, { userId }),
-  getMatches: (userId: string, projectId: string) => request<MatchesResponse>("GET", `/projects/${projectId}/matches`, { userId }),
+  createProject: (input: { title: string; description: string; teamSize?: number; location?: string; remote?: boolean }) =>
+    request<{ projectId: string; title: string; project: Project }>("POST", "/projects", input),
+  analyzeProject: (projectId: string) => request<Analysis>("POST", `/projects/${projectId}/analyze`),
+  getMatches: (projectId: string) => request<MatchesResponse>("GET", `/projects/${projectId}/matches`),
 
-  invite: (userId: string, projectId: string, input: { toUserId: string; message?: string; role?: string }) =>
-    request<{ request: CollaborationRequest }>("POST", `/projects/${projectId}/requests`, { userId, body: input }),
-  projectRequests: (userId: string, projectId: string) =>
-    request<{ requests: Array<CollaborationRequest & { toUser?: UserSummary }> }>("GET", `/projects/${projectId}/requests`, { userId }),
-  respond: (userId: string, requestId: string, status: "accepted" | "rejected") =>
-    request<{ request: CollaborationRequest; team?: Team }>("PUT", `/requests/${requestId}`, { userId, body: { status } }),
+  invite: (projectId: string, input: { toUserId: string; message?: string; role?: string }) => request<{ request: CollaborationRequest }>("POST", `/projects/${projectId}/requests`, input),
+  projectRequests: (projectId: string) => request<{ requests: Array<CollaborationRequest & { toUser?: UserSummary }> }>("GET", `/projects/${projectId}/requests`),
+  respond: (requestId: string, status: "accepted" | "rejected") => request<{ request: CollaborationRequest; team?: Team }>("PUT", `/requests/${requestId}`, { status }),
 
   getTeam: (projectId: string) => request<TeamResponse>("GET", `/projects/${projectId}/team`),
-  getTeamGaps: (userId: string, projectId: string) => request<TeamGaps>("GET", `/projects/${projectId}/team-gaps`, { userId }),
+  getTeamGaps: (projectId: string) => request<TeamGaps>("GET", `/projects/${projectId}/team-gaps`),
 
-  presignUpload: (userId: string, kind: "avatar" | "project", contentType: string) =>
-    request<{ uploadUrl: string; key: string; assetPath: string; headers: Record<string, string> }>("POST", "/uploads/presign", { userId, body: { kind, contentType } }),
+  presignUpload: (kind: "avatar" | "project", contentType: string) =>
+    request<{ uploadUrl: string; key: string; assetPath: string; headers: Record<string, string> }>("POST", "/uploads/presign", { kind, contentType }),
   assetUrl: (assetPath: string) => `${API_BASE_URL}${assetPath}`,
 
-  getRoom: (userId: string, projectId: string) => request<RoomResponse>("GET", `/projects/${projectId}/room`, { userId }),
-  messagesAfter: (userId: string, projectId: string, after?: string) =>
-    request<{ messages: ChatMessage[] }>("GET", `/projects/${projectId}/messages${after ? `?after=${encodeURIComponent(after)}` : ""}`, { userId }),
-  sendMessage: (userId: string, projectId: string, text: string) => request<{ message: ChatMessage }>("POST", `/projects/${projectId}/messages`, { userId, body: { text } }),
-  joinCall: (userId: string, projectId: string) => request<CallJoin>("POST", `/projects/${projectId}/call`, { userId }),
+  getRoom: (projectId: string) => request<RoomResponse>("GET", `/projects/${projectId}/room`),
+  messagesAfter: (projectId: string, after?: string) => request<{ messages: ChatMessage[] }>("GET", `/projects/${projectId}/messages${after ? `?after=${encodeURIComponent(after)}` : ""}`),
+  sendMessage: (projectId: string, text: string) => request<{ message: ChatMessage }>("POST", `/projects/${projectId}/messages`, { text }),
+  joinCall: (projectId: string) => request<CallJoin>("POST", `/projects/${projectId}/call`),
 };

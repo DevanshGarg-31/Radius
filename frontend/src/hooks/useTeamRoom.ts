@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, WS_URL, type ChatMessage, type RoomCall, type RoomEvent, type RoomResponse } from "@/services/api";
+import { api, getIdToken, WS_URL, type ChatMessage, type RoomCall, type RoomEvent, type RoomResponse } from "@/services/api";
 
 export type Connection = "connecting" | "live" | "polling";
 
@@ -40,7 +40,7 @@ export function useTeamRoom(projectId: string, userId: string) {
   useEffect(() => {
     let active = true;
     api
-      .getRoom(userId, projectId)
+      .getRoom(projectId)
       .then((room) => {
         if (!active) return;
         setMessages(room.messages);
@@ -67,7 +67,7 @@ export function useTeamRoom(projectId: string, userId: string) {
 
     const catchUp = () =>
       api
-        .messagesAfter(userId, projectId, lastKey.current)
+        .messagesAfter(projectId, lastKey.current)
         .then(({ messages: newer }) => !stopped && setMessages((m) => merge(m, newer)))
         .catch(() => undefined);
 
@@ -76,7 +76,7 @@ export function useTeamRoom(projectId: string, userId: string) {
       pollTimer ??= setInterval(catchUp, POLL_MS);
       callTimer ??= setInterval(() => {
         api
-          .getRoom(userId, projectId)
+          .getRoom(projectId)
           .then((room) => !stopped && setCall(room.call))
           .catch(() => undefined);
       }, CALL_REFRESH_MS);
@@ -87,9 +87,12 @@ export function useTeamRoom(projectId: string, userId: string) {
       if (event.type === "call") setCall({ meetingId: "", startedBy: event.startedBy, startedAt: event.startedAt });
     };
 
-    const connect = () => {
-      const params = new URLSearchParams({ projectId, userId });
-      socket = new WebSocket(`${WS_URL}?${params}`);
+    const connect = async () => {
+      // A fresh ID token each time, since browsers can't send headers on WebSockets.
+      const token = await getIdToken();
+      if (stopped) return;
+      if (!token) return startPolling();
+      socket = new WebSocket(`${WS_URL}?${new URLSearchParams({ projectId, token })}`);
       socket.onopen = () => {
         everOpened = true;
         attempts = 0;
@@ -109,12 +112,12 @@ export function useTeamRoom(projectId: string, userId: string) {
         if (!everOpened || attempts >= 5) return startPolling();
         attempts += 1;
         setConnection("connecting");
-        timers.push(setTimeout(connect, Math.min(1000 * 2 ** attempts, 15000)));
+        timers.push(setTimeout(() => void connect(), Math.min(1000 * 2 ** attempts, 15000)));
       };
     };
 
     if (WS_URL) {
-      connect();
+      void connect();
       const ping = setInterval(() => socket?.readyState === WebSocket.OPEN && socket.send(JSON.stringify({ action: "ping" })), PING_MS);
       timers.push(ping as unknown as ReturnType<typeof setTimeout>);
     } else {
@@ -133,10 +136,10 @@ export function useTeamRoom(projectId: string, userId: string) {
 
   const send = useCallback(
     async (text: string) => {
-      const { message } = await api.sendMessage(userId, projectId, text);
+      const { message } = await api.sendMessage(projectId, text);
       setMessages((m) => merge(m, [message]));
     },
-    [projectId, userId],
+    [projectId],
   );
 
   const reload = useCallback(() => {

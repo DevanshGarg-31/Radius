@@ -1,87 +1,184 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
-import { api, type User } from "@/services/api";
+import "aws-amplify/auth/enable-oauth-listener";
+import {
+  autoSignIn,
+  confirmResetPassword,
+  confirmSignUp,
+  fetchAuthSession,
+  resendSignUpCode,
+  resetPassword,
+  signIn as amplifySignIn,
+  signInWithRedirect,
+  signOut as amplifySignOut,
+  signUp as amplifySignUp,
+} from "aws-amplify/auth";
+import { Hub } from "aws-amplify/utils";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { api, setTokenProvider, type ProfileInput, type User } from "@/services/api";
+import { configureAmplify, isAuthConfigured } from "./amplify";
 
 /**
- * Demo sign-in: the chosen person's id is kept in localStorage and sent to the
- * API as X-User-Id. Switching accounts is how the demo shows both sides of an invite.
+ * Who is using radius, via Amazon Cognito:
+ *   loading        restoring the session
+ *   signed-out     no session
+ *   needs-profile  signed in (email verified or Google) but hasn't created a profile yet
+ *   ready          signed in with a profile
  */
+export type SessionState =
+  | { status: "loading" }
+  | { status: "signed-out" }
+  | { status: "needs-profile"; account: Account }
+  | { status: "ready"; account: Account; user: User };
 
-const STORAGE_KEY = "radius.userId";
-const CHANGE_EVENT = "radius:session";
-
-function readStoredId(): string | null {
-  try {
-    return localStorage.getItem(STORAGE_KEY);
-  } catch {
-    return null;
-  }
+export interface Account {
+  email: string;
+  name: string;
 }
 
-function storeId(userId: string | null): void {
-  try {
-    if (userId) localStorage.setItem(STORAGE_KEY, userId);
-    else localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // Storage unavailable (private mode): the session lasts for this page only.
-  }
-  window.dispatchEvent(new Event(CHANGE_EVENT));
-}
-
-function subscribe(onChange: () => void): () => void {
-  window.addEventListener("storage", onChange);
-  window.addEventListener(CHANGE_EVENT, onChange);
-  return () => {
-    window.removeEventListener("storage", onChange);
-    window.removeEventListener(CHANGE_EVENT, onChange);
-  };
-}
+/** What happened after a sign-in or sign-up attempt, so the page knows what to show next. */
+export type AuthStep = "done" | "confirm-code";
 
 interface Session {
-  /** undefined while restoring; null when signed out. */
+  state: SessionState;
+  /** The profile when ready; null when signed out or without a profile; undefined while loading. */
   user: User | null | undefined;
-  signIn: (who: { userId?: string; username?: string }) => Promise<User>;
-  signOut: () => void;
+  signIn: (email: string, password: string) => Promise<AuthStep>;
+  signUp: (input: { email: string; password: string; name: string }) => Promise<AuthStep>;
+  /** "signed-in" when the new account signed in straight away; "confirmed" when they still need to log in. */
+  confirmCode: (email: string, code: string) => Promise<"signed-in" | "confirmed">;
+  resendCode: (email: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  confirmNewPassword: (email: string, code: string, newPassword: string) => Promise<void>;
+  createProfile: (input: ProfileInput & { username: string }) => Promise<User>;
+  signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 }
 
 const SessionContext = createContext<Session | null>(null);
 
+setTokenProvider(async () => {
+  if (!isAuthConfigured) return undefined;
+  try {
+    const { tokens } = await fetchAuthSession();
+    return tokens?.idToken?.toString();
+  } catch {
+    return undefined;
+  }
+});
+
 export function SessionProvider({ children }: { children: ReactNode }) {
-  // undefined on the server and during hydration, then the stored id (or null).
-  const storedId = useSyncExternalStore<string | null | undefined>(subscribe, readStoredId, () => undefined);
-  const [loaded, setLoaded] = useState<{ id: string; user: User } | null>(null);
-
-  useEffect(() => {
-    if (!storedId || loaded?.id === storedId) return;
-    let active = true;
-    api
-      .getUser(storedId)
-      .then(({ user }) => active && setLoaded({ id: storedId, user }))
-      .catch(() => active && storeId(null));
-    return () => {
-      active = false;
-    };
-  }, [storedId, loaded?.id]);
-
-  const signIn = useCallback(async (who: { userId?: string; username?: string }) => {
-    const { user } = await api.demoLogin(who);
-    setLoaded({ id: user.userId, user });
-    storeId(user.userId);
-    return user;
-  }, []);
-
-  const signOut = useCallback(() => storeId(null), []);
+  const [state, setState] = useState<SessionState>({ status: "loading" });
 
   const refresh = useCallback(async () => {
-    if (!storedId) return;
-    const { user } = await api.getUser(storedId);
-    setLoaded({ id: storedId, user });
-  }, [storedId]);
+    if (!isAuthConfigured) {
+      setState({ status: "signed-out" });
+      return;
+    }
+    try {
+      const { tokens } = await fetchAuthSession();
+      if (!tokens?.idToken) {
+        setState({ status: "signed-out" });
+        return;
+      }
+      const me = await api.getMe();
+      setState(me.user ? { status: "ready", account: me.account, user: me.user } : { status: "needs-profile", account: me.account });
+    } catch {
+      setState({ status: "signed-out" });
+    }
+  }, []);
 
-  const user = storedId === undefined ? undefined : storedId === null ? null : loaded?.id === storedId ? loaded.user : undefined;
-  const value = useMemo(() => ({ user, signIn, signOut, refresh }), [user, signIn, signOut, refresh]);
+  useEffect(() => {
+    configureAmplify();
+    const stop = Hub.listen("auth", ({ payload }) => {
+      // Covers Google redirects, sign-in/out in other tabs, and expired sessions.
+      if (["signedIn", "signedOut", "signInWithRedirect", "signInWithRedirect_failure", "tokenRefresh_failure"].includes(payload.event)) void refresh();
+    });
+    // Restore any existing session once, after Amplify is configured.
+    const first = setTimeout(() => void refresh(), 0);
+    return () => {
+      stop();
+      clearTimeout(first);
+    };
+  }, [refresh]);
+
+  const signIn = useCallback(
+    async (email: string, password: string): Promise<AuthStep> => {
+      const { nextStep } = await amplifySignIn({ username: email.trim(), password });
+      if (nextStep.signInStep === "CONFIRM_SIGN_UP") {
+        await resendSignUpCode({ username: email.trim() });
+        return "confirm-code";
+      }
+      await refresh();
+      return "done";
+    },
+    [refresh],
+  );
+
+  const signUp = useCallback(async ({ email, password, name }: { email: string; password: string; name: string }): Promise<AuthStep> => {
+    const { nextStep } = await amplifySignUp({
+      username: email.trim(),
+      password,
+      options: { userAttributes: { email: email.trim(), name: name.trim() }, autoSignIn: true },
+    });
+    return nextStep.signUpStep === "CONFIRM_SIGN_UP" ? "confirm-code" : "done";
+  }, []);
+
+  const confirmCode = useCallback(
+    async (email: string, code: string) => {
+      const { nextStep } = await confirmSignUp({ username: email.trim(), confirmationCode: code.trim() });
+      // Signs in straight away after sign-up; if that isn't possible (e.g. a new tab), they log in normally.
+      let signedIn = false;
+      if (nextStep.signUpStep === "COMPLETE_AUTO_SIGN_IN") {
+        try {
+          signedIn = (await autoSignIn()).isSignedIn;
+        } catch {
+          signedIn = false;
+        }
+      }
+      await refresh();
+      return signedIn ? "signed-in" : "confirmed";
+    },
+    [refresh],
+  );
+
+  const resendCode = useCallback(async (email: string) => {
+    await resendSignUpCode({ username: email.trim() });
+  }, []);
+
+  const signInWithGoogle = useCallback(async () => {
+    await signInWithRedirect({ provider: "Google" });
+  }, []);
+
+  const forgotPassword = useCallback(async (email: string) => {
+    await resetPassword({ username: email.trim() });
+  }, []);
+
+  const confirmNewPassword = useCallback(async (email: string, code: string, newPassword: string) => {
+    await confirmResetPassword({ username: email.trim(), confirmationCode: code.trim(), newPassword });
+  }, []);
+
+  const createProfile = useCallback(
+    async (input: ProfileInput & { username: string }) => {
+      const { user } = await api.createProfile(input);
+      setState((s) => (s.status === "needs-profile" || s.status === "ready" ? { status: "ready", account: s.account, user } : s));
+      return user;
+    },
+    [],
+  );
+
+  const signOut = useCallback(async () => {
+    await amplifySignOut();
+    setState({ status: "signed-out" });
+  }, []);
+
+  const user = state.status === "ready" ? state.user : state.status === "loading" ? undefined : null;
+
+  const value = useMemo(
+    () => ({ state, user, signIn, signUp, confirmCode, resendCode, signInWithGoogle, forgotPassword, confirmNewPassword, createProfile, signOut, refresh }),
+    [state, user, signIn, signUp, confirmCode, resendCode, signInWithGoogle, forgotPassword, confirmNewPassword, createProfile, signOut, refresh],
+  );
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
 
@@ -91,7 +188,7 @@ export function useSession(): Session {
   return ctx;
 }
 
-/** For pages inside the app shell, where a signed-in user is guaranteed. */
+/** For pages inside the app shell, where a signed-in user with a profile is guaranteed. */
 export function useCurrentUser(): User {
   const { user } = useSession();
   if (!user) throw new Error("useCurrentUser used outside the signed-in app shell");
