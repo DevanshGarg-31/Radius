@@ -1,0 +1,9 @@
+{
+  "ai football analytics": {
+    "category": "AI/Sports",
+    "skills": ["Python", "Machine Learning", "Computer Vision", "React"],
+    "roles": ["ML Engineer", "Frontend Developer", "Computer Vision Engineer"],
+    "requirements": ["Machine learning", "Computer vision", "Frontend development"],
+    "topics": ["AI", "Sports", "Computer Vision"]
+  }
+}
