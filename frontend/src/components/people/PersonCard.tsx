@@ -17,8 +17,8 @@ interface MatchRowProps {
 }
 
 function InviteStatus({ status, onInvite }: { status: Match["requestStatus"]; onInvite: () => void }) {
-  if (status === "pending") return <span className="text-sm font-medium text-success-ink">Invitation sent ✓</span>;
-  if (status === "accepted") return <span className="text-sm font-medium text-success-ink">On the team ✓</span>;
+  if (status === "pending") return <span className="rounded-btn border-2 border-ink bg-mint px-2.5 py-1 font-mono text-xs font-bold uppercase">Invitation sent ✓</span>;
+  if (status === "accepted") return <span className="rounded-btn border-2 border-ink bg-teal px-2.5 py-1 font-mono text-xs font-bold uppercase">On the team ✓</span>;
   return (
     <Button size="sm" onClick={onInvite}>
       {status === "rejected" ? "Invite again →" : "Invite →"}
@@ -31,7 +31,7 @@ export function MatchRow({ match, focus, onExplain, onInvite, index }: MatchRowP
   const coversFocus = focus ? match.gapSkills.some((s) => s.toLowerCase() === focus.toLowerCase()) || match.matchedSkills.some((s) => s.toLowerCase() === focus.toLowerCase()) : false;
   return (
     <li
-      className={`animate-rise border-b border-line px-5 py-6 last:border-b-0 sm:px-7 ${coversFocus ? "relative bg-warm-soft/50 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-warm" : ""}`}
+      className={`animate-rise rounded-panel border-[2.5px] border-ink px-5 py-6 shadow-brutal sm:px-7 ${coversFocus ? "bg-warm-soft" : "bg-surface"}`}
       style={{ animationDelay: `${index * 70}ms` }}
     >
       <div className="flex gap-4 sm:gap-5">
@@ -54,18 +54,18 @@ export function MatchRow({ match, focus, onExplain, onInvite, index }: MatchRowP
             <MatchScore score={match.score} size={54} />
           </div>
 
-          {coversFocus && focus && <p className="mt-3 text-sm font-semibold text-warm-ink">Covers {focus}, the gap in your team</p>}
+          {coversFocus && focus && <p className="mt-3 inline-block -rotate-1 rounded-btn border-2 border-ink bg-mustard px-2.5 py-1 font-mono text-xs font-bold uppercase shadow-brutal-sm">Covers {focus}, the gap in your team</p>}
 
           <div className="mt-3 space-y-1">
             <SkillList items={match.skills} emphasise={match.matchedSkills} />
-            {match.gapSkills.length > 0 && <p className="text-[15px] text-ink">Fills your team&apos;s gap in {joinNatural(match.gapSkills)}</p>}
+            {match.gapSkills.length > 0 && <p className="pt-1 text-[15px] font-semibold text-ink">Fills your team&apos;s gap in {joinNatural(match.gapSkills)}</p>}
             {match.matchedInterests.length > 0 && <p className="text-[15px] text-muted">Into {match.matchedInterests.join(" · ")}</p>}
           </div>
 
-          {match.reason && <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-ink-soft">{match.reason}</p>}
+          {match.reason && <p className="mt-4 max-w-2xl rounded-card border-2 border-dashed border-ink/40 bg-canvas px-4 py-3 text-[15px] leading-relaxed">{match.reason}</p>}
 
           <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
-            <button type="button" onClick={onExplain} className="text-sm font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-ink">
+            <button type="button" onClick={onExplain} className="h-8 rounded-btn border-2 border-ink bg-surface px-3 text-sm font-semibold shadow-brutal-sm transition-[transform,box-shadow] hover:-translate-y-px hover:bg-lilac hover:shadow-brutal active:translate-y-0.5 active:shadow-none">
               Why this person?
             </button>
             <InviteStatus status={match.requestStatus} onInvite={onInvite} />
@@ -80,12 +80,12 @@ export function MatchRow({ match, focus, onExplain, onInvite, index }: MatchRowP
 export function PersonRow({ person }: { person: UserSummary }) {
   return (
     <li>
-      <Link href={`/people/${person.userId}`} className="group flex gap-4 rounded-card p-4 transition-colors hover:bg-surface">
+      <Link href={`/people/${person.userId}`} className="group flex h-full gap-4 rounded-card border-2 border-ink bg-surface p-4 shadow-brutal-sm transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-brutal">
         <Avatar name={person.name} seed={person.userId} src={person.avatarUrl || undefined} size={44} />
         <div className="min-w-0">
-          <p className="font-semibold group-hover:underline">{person.name}</p>
+          <p className="font-display text-lg font-extrabold leading-tight">{person.name}</p>
           <p className="line-clamp-2 text-[15px] text-muted">{person.bio}</p>
-          <SkillList items={person.skills} limit={4} className="mt-2 !text-sm" />
+          <SkillList items={person.skills} limit={4} className="mt-3" />
         </div>
       </Link>
     </li>

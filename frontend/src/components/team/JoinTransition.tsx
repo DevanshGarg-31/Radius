@@ -40,7 +40,7 @@ export function JoinTransition({ projectTitle, members, joiner }: { projectTitle
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto h-auto w-full max-w-[520px]" role="img" aria-label={`${joiner.name} joins ${projectTitle}`}>
       {seats.map((s) => (
-        <line key={`e-${s.userId}`} x1={hub.x} y1={hub.y} x2={s.x} y2={s.y} stroke="var(--color-line-strong)" strokeWidth={1.25} />
+        <line key={`e-${s.userId}`} x1={hub.x} y1={hub.y} x2={s.x} y2={s.y} stroke="rgba(18,18,18,0.35)" strokeWidth={1.5} />
       ))}
       <line
         x1={hub.x}
@@ -61,7 +61,7 @@ export function JoinTransition({ projectTitle, members, joiner }: { projectTitle
         const t = avatarTone(s.userId);
         return (
           <g key={s.userId}>
-            <circle cx={s.x} cy={s.y} r={16} fill={t.bg} stroke="var(--color-canvas)" strokeWidth={3} />
+            <circle cx={s.x} cy={s.y} r={16} fill={t.bg} stroke="var(--color-ink)" strokeWidth={2} />
             <text x={s.x} y={s.y + 4} textAnchor="middle" fontSize={11} fontWeight={700} fill={t.fg} fontFamily="var(--font-display)">
               {initials(s.name)}
             </text>
@@ -69,7 +69,7 @@ export function JoinTransition({ projectTitle, members, joiner }: { projectTitle
         );
       })}
       <g style={{ transform: `translate(${pos.x}px, ${pos.y}px)`, transition: "transform 700ms cubic-bezier(0.3, 0.7, 0.2, 1)" }}>
-        <circle r={19} fill={tone.bg} stroke="var(--color-accent)" strokeWidth={2} />
+        <circle r={19} fill={tone.bg} stroke="var(--color-ink)" strokeWidth={2.5} />
         <text y={4.5} textAnchor="middle" fontSize={12} fontWeight={700} fill={tone.fg} fontFamily="var(--font-display)">
           {initials(joiner.name)}
         </text>

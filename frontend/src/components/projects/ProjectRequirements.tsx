@@ -14,15 +14,15 @@ export function ProjectRequirements({ title, skills, roles, requirements = [], t
   const graph = hubLayout({ id: "project", label: title, kind: "project" }, skills.map((label) => ({ label, kind: "skill" as const })), { width: 420, height: 320, radius: 118, startDeg: -135 });
   return (
     <div className="grid items-center gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      <div className="order-2 md:order-1">
+      <div className="dot-grid order-2 rounded-panel border-[2.5px] border-ink bg-surface p-3 shadow-brutal md:order-1">
         <CollaborationGraph {...graph} width={420} height={320} title={`${title} needs ${skills.join(", ")}`} />
       </div>
       <div className="order-1 space-y-8 md:order-2">
         <div>
           <p className="eyebrow mb-3">Your idea needs</p>
-          <ul className="space-y-1">
-            {skills.map((skill) => (
-              <li key={skill} className="font-display text-2xl font-bold leading-snug">
+          <ul className="flex flex-wrap gap-3">
+            {skills.map((skill, i) => (
+              <li key={skill} className={`rounded-btn border-[2.5px] border-ink px-3 py-1.5 font-display text-xl font-extrabold shadow-brutal-sm ${["bg-tomato", "bg-mustard", "bg-teal", "bg-lilac", "bg-sky", "bg-pink"][i % 6]}`}>
                 {skill}
               </li>
             ))}

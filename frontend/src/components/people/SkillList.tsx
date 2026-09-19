@@ -1,33 +1,26 @@
-import { Fragment } from "react";
-
 interface SkillListProps {
   items: readonly string[];
-  /** Items shown in ink and bold; the rest are muted. */
+  /** Items highlighted in mustard; the rest are plain chips. */
   emphasise?: readonly string[];
-  /** Maximum shown before "+N more". */
+  /** Maximum shown before "+N". */
   limit?: number;
   className?: string;
 }
 
-/** Skills as typography ("Python · Machine Learning · React"), not a row of pills. */
+/** Skills as retro chips: outlined in ink, the relevant ones filled in mustard. */
 export function SkillList({ items, emphasise = [], limit, className = "" }: SkillListProps) {
   const strong = new Set(emphasise.map((s) => s.toLowerCase()));
   const shown = limit ? items.slice(0, limit) : items;
   const rest = items.length - shown.length;
   return (
-    <p className={`text-[15px] leading-relaxed ${className}`}>
-      {shown.map((item, i) => (
-        <Fragment key={item}>
-          {i > 0 && (
-            <span className="text-line-strong" aria-hidden="true">
-              {" · "}
-            </span>
-          )}
-          <span className={`whitespace-nowrap ${strong.has(item.toLowerCase()) ? "font-semibold text-ink" : "text-muted"}`}>{item}</span>
-        </Fragment>
+    <ul className={`flex flex-wrap items-center gap-1.5 ${className}`}>
+      {shown.map((item) => (
+        <li key={item} className={`whitespace-nowrap rounded-btn border-2 border-ink px-2 py-0.5 font-mono text-xs font-bold ${strong.has(item.toLowerCase()) ? "bg-mustard" : "bg-surface"}`}>
+          {item}
+        </li>
       ))}
-      {rest > 0 && <span className="pl-2 text-muted">+{rest} more</span>}
-    </p>
+      {rest > 0 && <li className="px-1 font-mono text-xs font-bold text-muted">+{rest}</li>}
+    </ul>
   );
 }
 
@@ -37,12 +30,12 @@ export function CheckList({ label, items, note }: { label: string; items: readon
     <div>
       <p className="eyebrow mb-2">{label}</p>
       {items.length ? (
-        <ul className="space-y-1">
+        <ul className="space-y-1.5">
           {items.map((item) => (
-            <li key={item} className="flex items-center gap-2 text-[15px]">
-              <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" className="shrink-0 text-success">
-                <path d="m3 7.2 2.6 2.6L11 4.4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+            <li key={item} className="flex items-center gap-2 text-[15px] font-medium">
+              <span className="flex size-5 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-mint text-[11px] font-bold" aria-hidden="true">
+                ✓
+              </span>
               {item}
             </li>
           ))}

@@ -19,7 +19,7 @@ export function TeamGap({ gaps, projectId, title }: { gaps: TeamGaps; projectId:
 
   return (
     <section aria-labelledby="gap-heading" className="grid items-center gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-      <div>
+      <div className="dot-grid rounded-panel border-[2.5px] border-ink bg-surface p-3 shadow-brutal">
         <CollaborationGraph {...graph} width={440} height={340} title={`Covered: ${gaps.coveredSkills.join(", ") || "none"}. Missing: ${gaps.missingSkills.join(", ") || "none"}.`} />
       </div>
       <div className="animate-rise [animation-delay:600ms]">
@@ -34,7 +34,7 @@ export function TeamGap({ gaps, projectId, title }: { gaps: TeamGaps; projectId:
         ) : (
           <>
             <p className="eyebrow mb-3">{missing === 1 ? "One gap remains" : `${numberWord(missing)} gaps remain`}</p>
-            <h2 id="gap-heading" className="text-[34px] font-extrabold leading-tight text-warm-ink">
+            <h2 id="gap-heading" className="inline-block -rotate-1 rounded-btn border-[2.5px] border-ink bg-mustard px-3 py-1 text-[34px] font-extrabold leading-tight shadow-brutal">
               {joinNatural(gaps.missingSkills)}
             </h2>
             {gaps.missingRoles.length > 0 && (

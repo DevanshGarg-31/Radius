@@ -206,7 +206,7 @@ export default function LandingPage() {
           {/* Team gap */}
           <section className="mx-auto grid max-w-[1200px] items-center gap-12 px-4 py-24 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:px-8">
             <Reveal className="order-2 lg:order-1">
-              <div className="rounded-panel border-[2.5px] border-ink bg-mint/60 p-4 shadow-brutal-lg">
+              <div className="dot-grid rounded-panel border-[2.5px] border-ink bg-surface p-4 shadow-brutal-lg">
                 <GapGraph />
               </div>
             </Reveal>

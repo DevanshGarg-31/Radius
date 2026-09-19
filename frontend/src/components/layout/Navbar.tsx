@@ -42,7 +42,7 @@ export function Navbar() {
   }, [user.userId, pathname, answered]);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-canvas/90 backdrop-blur-sm">
+    <header className="sticky top-0 z-30 border-b-[2.5px] border-ink bg-canvas/95 backdrop-blur-sm">
       <nav aria-label="Main" className="mx-auto flex h-16 max-w-[1200px] items-center gap-6 px-4 sm:px-6 lg:px-8">
         <Logo href="/dashboard" />
         <ul className="ml-2 hidden items-center gap-1 md:flex">
@@ -53,15 +53,14 @@ export function Navbar() {
                 <Link
                   href={link.href}
                   aria-current={active ? "page" : undefined}
-                  className={`relative flex items-center gap-2 rounded-btn px-3 py-2 text-[15px] transition-colors ${active ? "font-semibold text-ink" : "text-muted hover:text-ink"}`}
+                  className={`flex items-center gap-2 rounded-btn border-2 px-3 py-1.5 font-mono text-[13px] font-bold uppercase transition-colors ${active ? "border-ink bg-mustard shadow-brutal-sm" : "border-transparent hover:border-ink hover:bg-surface"}`}
                 >
                   {link.label}
                   {link.href === "/invitations" && pending > 0 && (
-                    <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-warm px-1.5 text-[11px] font-bold leading-5 text-ink" aria-label={`${pending} pending`}>
+                    <span className="inline-flex min-w-5 items-center justify-center rounded-full border-2 border-ink bg-tomato px-1 text-[11px] font-bold leading-4 text-ink" aria-label={`${pending} pending`}>
                       {pending}
                     </span>
                   )}
-                  {active && <span className="absolute inset-x-3 -bottom-[13px] h-0.5 bg-ink" aria-hidden="true" />}
                 </Link>
               </li>
             );
@@ -77,10 +76,10 @@ export function Navbar() {
         </div>
       </nav>
       {/* Compact navigation for small screens. */}
-      <ul className="flex items-center gap-1 overflow-x-auto border-t border-line px-3 py-1.5 md:hidden">
+      <ul className="flex items-center gap-1 overflow-x-auto border-t-2 border-ink px-3 py-1.5 md:hidden">
         {[...LINKS, { href: "/projects/new", label: "+ Start" }].map((link) => (
           <li key={link.href}>
-            <Link href={link.href} className={`block rounded-btn px-3 py-1.5 text-sm ${pathname === link.href ? "bg-sunken font-semibold" : "text-muted"}`}>
+            <Link href={link.href} className={`block rounded-btn px-3 py-1.5 text-sm ${pathname === link.href ? "border-2 border-ink bg-mustard font-bold" : "text-ink-soft"}`}>
               {link.label}
               {link.href === "/invitations" && pending > 0 ? ` (${pending})` : ""}
             </Link>

@@ -28,11 +28,11 @@ function TeamFormed({ joined, me }: { joined: Joined; me: { userId: string; name
     <section className="animate-fade" aria-live="polite">
       <JoinTransition projectTitle={joined.team.project.title} members={joined.team.members} joiner={me} />
       <div className="mt-8 animate-rise [animation-delay:1100ms]">
-        <h2 className="text-[28px] font-extrabold">Team formed ✓</h2>
+        <h2 className="inline-block -rotate-1 rounded-btn border-[2.5px] border-ink bg-mint px-3 py-1 text-[32px] font-extrabold shadow-brutal">Team formed ✓</h2>
         <p className="mt-2 text-[17px] text-ink-soft">
           You&apos;re now on <strong>{joined.team.project.title}</strong> as {joined.invitation.role}.
         </p>
-        <ul className="mt-6 divide-y divide-line border-y border-line">
+        <ul className="mt-6 divide-y-2 divide-ink rounded-card border-[2.5px] border-ink bg-surface px-4 shadow-brutal">
           {joined.team.members.map((m) => (
             <li key={m.userId} className="flex items-center gap-3 py-3">
               <Avatar name={m.name} seed={m.userId} size={32} />
@@ -80,7 +80,7 @@ function InvitationItem({ invitation, onAnswered }: { invitation: Invitation; on
   }
 
   return (
-    <li className="animate-rise py-8">
+    <li className="animate-rise rounded-panel border-[2.5px] border-ink bg-surface p-6 shadow-brutal">
       <div className="flex gap-4">
         {invitation.fromUser && <Avatar name={invitation.fromUser.name} seed={invitation.fromUser.userId} size={44} />}
         <div className="min-w-0 flex-1">
@@ -94,7 +94,7 @@ function InvitationItem({ invitation, onAnswered }: { invitation: Invitation; on
             )}
             .
           </p>
-          {invitation.message && <blockquote className="mt-4 border-l-2 border-line-strong pl-4 text-[15px] leading-relaxed text-ink-soft">{invitation.message}</blockquote>}
+          {invitation.message && <blockquote className="mt-4 rounded-card border-2 border-dashed border-ink/40 bg-canvas px-4 py-3 text-[15px] leading-relaxed">{invitation.message}</blockquote>}
           {invitation.project?.description && <p className="mt-4 max-w-2xl text-[15px] text-muted">{invitation.project.description}</p>}
           {error && (
             <p role="alert" className="mt-4 text-sm text-danger">
@@ -102,7 +102,7 @@ function InvitationItem({ invitation, onAnswered }: { invitation: Invitation; on
             </p>
           )}
           <div className="mt-6 flex gap-3">
-            <Button onClick={() => answer("accepted")} busy={busy === "accepted"} disabled={Boolean(busy)}>
+            <Button variant="pop" onClick={() => answer("accepted")} busy={busy === "accepted"} disabled={Boolean(busy)}>
               Accept and join →
             </Button>
             <Button variant="quiet" onClick={() => answer("rejected")} busy={busy === "rejected"} disabled={Boolean(busy)}>
@@ -139,7 +139,7 @@ export default function InvitationsPage() {
       {invitations.status === "success" && (
         <>
           {pending.length ? (
-            <ul className="divide-y divide-line border-t border-line">
+            <ul className="space-y-6">
               {pending.map((inv) => (
                 <InvitationItem
                   key={inv.requestId}

@@ -22,7 +22,7 @@ function PersonButton({ person, caption, onPick, busy }: { person: UserSummary; 
       type="button"
       onClick={onPick}
       disabled={busy}
-      className="group flex w-full items-center gap-4 rounded-card border border-transparent p-3 text-left transition-colors hover:border-line hover:bg-surface disabled:opacity-60"
+      className="group flex w-full items-center gap-4 rounded-card border-2 border-ink bg-surface p-3 text-left shadow-brutal-sm transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-brutal disabled:opacity-60"
     >
       <Avatar name={person.name} seed={person.userId} src={person.avatarUrl || undefined} size={44} />
       <span className="min-w-0 flex-1">
@@ -63,7 +63,7 @@ function LoginInner() {
         <Logo />
       </div>
       <header className="animate-rise pb-10 pt-8">
-        <h1 className="text-[36px] font-extrabold leading-tight sm:text-[44px]">Who&apos;s joining today?</h1>
+        <h1 className="text-[40px] font-extrabold leading-[1] sm:text-[56px]">Who&apos;s joining today?</h1>
         <p className="mt-3 text-[17px] text-muted">This is a demo network. Pick a person to continue as them; you can switch at any time from the menu.</p>
       </header>
 
@@ -77,7 +77,7 @@ function LoginInner() {
             <h2 id="story" className="eyebrow mb-3">
               The demo story
             </h2>
-            <div className="divide-y divide-line rounded-panel border border-line bg-surface/60 px-2 py-1">
+            <div className="grid gap-3">
               {STORY.map(({ username, part }) => {
                 const person = people.data.find((p) => p.username === username);
                 return person ? <PersonButton key={username} person={person} caption={part} onPick={() => pick(person.userId)} busy={Boolean(busy)} /> : null;
@@ -88,7 +88,7 @@ function LoginInner() {
             <h2 id="everyone" className="eyebrow mb-3">
               Everyone else in the network
             </h2>
-            <div className="grid gap-1 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
               {people.data
                 .filter((p) => !STORY.some((s) => s.username === p.username))
                 .map((p) => (

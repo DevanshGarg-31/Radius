@@ -33,7 +33,7 @@ export function MatchDetail({ match, weights, onClose, onInvite }: MatchDetailPr
             {match.requestStatus === null || match.requestStatus === "rejected" ? (
               <Button onClick={onInvite}>Invite {firstName(match.name)} →</Button>
             ) : (
-              <span className="text-sm font-medium text-success-ink">{match.requestStatus === "pending" ? "Invitation sent ✓" : "On the team ✓"}</span>
+              <span className="rounded-btn border-2 border-ink bg-mint px-2.5 py-1 font-mono text-xs font-bold uppercase">{match.requestStatus === "pending" ? "Invitation sent ✓" : "On the team ✓"}</span>
             )}
           </>
         )
@@ -44,7 +44,7 @@ export function MatchDetail({ match, weights, onClose, onInvite }: MatchDetailPr
           <div className="flex items-center gap-4">
             <Avatar name={match.name} seed={match.userId} src={match.avatarUrl || undefined} size={52} />
             <div>
-              <p className="font-display text-xl font-bold leading-tight">{match.name}</p>
+              <p className="font-display text-2xl font-extrabold leading-tight">{match.name}</p>
               <p className="text-[15px] text-muted">
                 {match.suggestedRole !== "Collaborator" ? match.suggestedRole : capitalise(match.experienceLevel)}
               </p>
@@ -64,7 +64,7 @@ export function MatchDetail({ match, weights, onClose, onInvite }: MatchDetailPr
           </div>
 
           {match.gapSkills.length > 0 && (
-            <p className="border-l-2 border-accent pl-4 text-[15px]">
+            <p className="rounded-card border-2 border-ink bg-mint px-4 py-3 text-[15px] shadow-brutal-sm">
               Fills a gap in your team: <strong>{match.gapSkills.join(", ")}</strong>
             </p>
           )}

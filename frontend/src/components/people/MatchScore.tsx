@@ -8,22 +8,21 @@ import { useCountUp } from "@/hooks/useCountUp";
  */
 export function MatchScore({ score, size = 56 }: { score: number; size?: number }) {
   const shown = useCountUp(score);
-  const stroke = size >= 96 ? 6 : 4;
+  const stroke = size >= 96 ? 10 : 6;
   const r = (size - stroke) / 2;
   const circumference = 2 * Math.PI * r;
   const large = size >= 96;
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }} role="img" aria-label={`Match score ${score} percent`}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90" aria-hidden="true">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-line)" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-sunken)" strokeWidth={stroke} />
         <circle
           cx={size / 2}
           cy={size / 2}
           r={r}
           fill="none"
-          stroke="var(--color-accent)"
+          stroke="var(--color-ink)"
           strokeWidth={stroke}
-          strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={circumference * (1 - shown / 100)}
         />

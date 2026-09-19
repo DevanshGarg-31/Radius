@@ -92,7 +92,7 @@ export default function ProjectPage() {
           <p className="text-[17px] text-muted">The founder hasn&apos;t worked out what this project needs yet.</p>
         )}
 
-        <section aria-labelledby="team" className="mt-16 grid gap-8 border-t border-line pt-10 md:grid-cols-[1fr_1.4fr]">
+        <section aria-labelledby="team" className="mt-16 grid gap-8 border-t-[2.5px] border-ink pt-10 md:grid-cols-[1fr_1.4fr]">
           <div>
             <h2 id="team" className="text-xl font-bold">
               The team so far

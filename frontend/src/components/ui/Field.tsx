@@ -1,7 +1,7 @@
 import { useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 
 const control =
-  "w-full rounded-btn border border-line bg-surface px-3.5 text-[15px] text-ink placeholder:text-muted/70 shadow-soft transition-colors hover:border-line-strong focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent/15 aria-invalid:border-danger";
+  "w-full rounded-btn border-2 border-ink bg-surface px-3.5 text-[15px] text-ink placeholder:text-muted/70 shadow-brutal-sm transition-shadow focus:shadow-brutal focus:outline-none aria-invalid:border-danger";
 
 interface FieldShellProps {
   label: string;
@@ -18,7 +18,7 @@ function FieldShell({ label, hint, error, hideLabel, children }: FieldShellProps
   const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className={hideLabel ? "sr-only" : "text-sm font-medium text-ink"}>
+      <label htmlFor={id} className={hideLabel ? "sr-only" : "font-mono text-xs font-bold uppercase text-ink"}>
         {label}
       </label>
       {children(id, describedBy)}

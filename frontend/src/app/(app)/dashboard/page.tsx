@@ -31,7 +31,7 @@ function IdeaStarter() {
         e.preventDefault();
         start();
       }}
-      className="rounded-panel border border-line bg-surface p-5 shadow-soft transition-shadow focus-within:shadow-lift sm:p-6"
+      className="rounded-panel border-[2.5px] border-ink bg-surface p-5 shadow-brutal transition-shadow focus-within:shadow-brutal-lg sm:p-6"
     >
       <label htmlFor="idea-starter" className="flex items-center gap-2 font-display font-bold">
         <span aria-hidden="true" className="text-muted">
@@ -61,7 +61,7 @@ function PendingInvitations({ userId }: { userId: string }) {
   if (invites.status !== "success" || !invites.data.length) return null;
   const first = invites.data[0]!;
   return (
-    <section aria-label="Invitations" className="animate-rise rounded-card border border-warm/40 bg-warm-soft px-5 py-4">
+    <section aria-label="Invitations" className="animate-rise rounded-card border-[2.5px] border-ink bg-mustard px-5 py-4 shadow-brutal">
       <p className="text-[15px]">
         <strong>{first.fromUser?.name ?? "Someone"}</strong> invited you to join <strong>{first.project?.title ?? "a project"}</strong>
         {first.role ? ` as ${first.role}` : ""}.
@@ -77,7 +77,7 @@ function PendingInvitations({ userId }: { userId: string }) {
 function PeopleToMeet({ project, userId }: { project: Project; userId: string }) {
   const matches = useAsync(() => api.getMatches(userId, project.projectId), [project.projectId, userId]);
   return (
-    <section aria-labelledby="meet">
+    <section aria-labelledby="meet" className="rounded-panel border-[2.5px] border-ink bg-lilac/40 p-6 shadow-brutal">
       <div className="mb-4 flex items-baseline justify-between gap-4">
         <h2 id="meet" className="text-xl font-bold">
           People you may want to meet
@@ -105,7 +105,7 @@ function PeopleToMeet({ project, userId }: { project: Project; userId: string })
                     </Link>
                     <p className="truncate text-sm text-muted">{m.suggestedRole !== "Collaborator" ? m.suggestedRole : m.skills.slice(0, 3).join(" · ")}</p>
                   </div>
-                  <span className="font-display text-lg font-bold tabular-nums">{m.score}%</span>
+                  <span className="rounded-btn border-2 border-ink bg-surface px-2 py-0.5 font-mono text-sm font-bold tabular-nums shadow-brutal-sm">{m.score}%</span>
                 </li>
               ))}
             </ul>
@@ -134,10 +134,10 @@ export default function DashboardPage() {
   return (
     <PageContainer narrow>
       <header className="animate-rise pb-8 pt-12 sm:pt-16">
-        <p className="text-[17px] text-muted">
+        <p className="inline-block -rotate-1 rounded-btn border-2 border-ink bg-lilac px-2.5 py-1 font-mono text-xs font-bold uppercase shadow-brutal-sm">
           {greeting()}, {firstName(user.name)}.
         </p>
-        <h1 className="mt-1 text-[36px] font-extrabold leading-tight sm:text-[44px]">What are you working on?</h1>
+        <h1 className="mt-5 text-[40px] font-extrabold leading-[1] sm:text-[56px]">What are you working on?</h1>
       </header>
 
       <div className="space-y-14">
@@ -161,7 +161,7 @@ export default function DashboardPage() {
           )}
           {projects.status === "success" &&
             (active.length ? (
-              <ul className="divide-y divide-line">
+              <ul className="mt-5 space-y-5">
                 {active.map((p) => (
                   <ProjectRow key={p.projectId} project={p} isOwner={p.ownerId === user.userId} />
                 ))}

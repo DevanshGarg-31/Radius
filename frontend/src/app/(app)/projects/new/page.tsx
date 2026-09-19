@@ -35,10 +35,10 @@ function clearDraft(): void {
 function TeamSizeStepper({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span id="team-size-label" className="text-sm font-medium">
+      <span id="team-size-label" className="font-mono text-xs font-bold uppercase">
         Team size
       </span>
-      <div role="group" aria-labelledby="team-size-label" className="flex h-10 items-center rounded-btn border border-line bg-surface shadow-soft">
+      <div role="group" aria-labelledby="team-size-label" className="flex h-10 items-center rounded-btn border-2 border-ink bg-surface shadow-brutal-sm">
         <button type="button" onClick={() => onChange(Math.max(2, value - 1))} className="h-full px-3 text-lg text-muted hover:text-ink" aria-label="Smaller team">
           −
         </button>
@@ -56,8 +56,8 @@ function TeamSizeStepper({ value, onChange }: { value: number; onChange: (n: num
 function WorkMode({ remote, onChange }: { remote: boolean; onChange: (remote: boolean) => void }) {
   return (
     <fieldset className="flex flex-col gap-1.5">
-      <legend className="mb-1.5 text-sm font-medium">Where</legend>
-      <div className="flex h-10 rounded-btn border border-line bg-surface p-0.5 shadow-soft">
+      <legend className="mb-1.5 font-mono text-xs font-bold uppercase">Where</legend>
+      <div className="flex h-10 rounded-btn border-2 border-ink bg-surface p-0.5 shadow-brutal-sm">
         {[
           { label: "Remote", value: true },
           { label: "In person", value: false },
@@ -173,9 +173,9 @@ export default function NewProjectPage() {
         }}
         noValidate
       >
-        <h1 className="animate-rise text-[36px] font-extrabold leading-tight sm:text-[48px]">What are you trying to build?</h1>
+        <h1 className="animate-rise text-[40px] font-extrabold leading-[1] sm:text-[60px]">What are you trying to build?</h1>
 
-        <div className="mt-10 animate-rise [animation-delay:80ms]">
+        <div className="mt-10 animate-rise rounded-panel border-[2.5px] border-ink bg-surface p-6 shadow-brutal-lg [animation-delay:80ms] sm:p-8">
           <label htmlFor="title" className="sr-only">
             Working title
           </label>
@@ -218,7 +218,7 @@ export default function NewProjectPage() {
               Write it like you&apos;d explain it to a friend: what it does, who it&apos;s for, what makes it hard.{" "}
               <button
                 type="button"
-                className="underline underline-offset-4 hover:text-ink"
+                className="ml-1 rounded-btn border-2 border-ink bg-mustard px-2 py-0.5 font-mono text-xs font-bold uppercase text-ink shadow-brutal-sm active:shadow-none"
                 onClick={() => {
                   setTitle(EXAMPLE_IDEA.title);
                   setDescription(EXAMPLE_IDEA.description);
@@ -241,7 +241,7 @@ export default function NewProjectPage() {
         </div>
 
         <div className="mt-12 flex items-center gap-5">
-          <Button type="submit" size="lg">
+          <Button type="submit" size="lg" variant="pop">
             Find my people →
           </Button>
           <p className="text-sm text-muted">We&apos;ll work out the skills and roles it needs.</p>

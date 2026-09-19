@@ -37,7 +37,7 @@ export default function DiscoverPage() {
             <p className="pb-3 text-sm text-muted" aria-live="polite">
               {filtered.length} {filtered.length === 1 ? "person" : "people"}
             </p>
-            <ul className="-mx-4 grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((p) => (
                 <PersonRow key={p.userId} person={p} />
               ))}
