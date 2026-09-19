@@ -27,7 +27,8 @@ import { configureAmplify, isAuthConfigured } from "./amplify";
  */
 export type SessionState =
   | { status: "loading" }
-  | { status: "signed-out" }
+  /** byUser: they clicked Sign out (go home), rather than a session that expired (go to log in). */
+  | { status: "signed-out"; byUser?: boolean }
   | { status: "needs-profile"; account: Account }
   | { status: "ready"; account: Account; user: User };
 
@@ -93,7 +94,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     configureAmplify();
     const stop = Hub.listen("auth", ({ payload }) => {
       // Covers Google redirects, sign-in/out in other tabs, and expired sessions.
-      if (["signedIn", "signedOut", "signInWithRedirect", "signInWithRedirect_failure", "tokenRefresh_failure"].includes(payload.event)) void refresh();
+      // (Our own Sign out already set the state; refreshing would drop the "signed out on purpose" flag.)
+      if (["signedIn", "signInWithRedirect", "signInWithRedirect_failure", "tokenRefresh_failure"].includes(payload.event)) void refresh();
+      if (payload.event === "signedOut") setState((s) => (s.status === "signed-out" ? s : { status: "signed-out" }));
     });
     // Restore any existing session once, after Amplify is configured.
     const first = setTimeout(() => void refresh(), 0);
@@ -170,7 +173,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await amplifySignOut();
-    setState({ status: "signed-out" });
+    setState({ status: "signed-out", byUser: true });
   }, []);
 
   const user = state.status === "ready" ? state.user : state.status === "loading" ? undefined : null;

@@ -18,9 +18,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const next = encodeURIComponent(pathname);
-    if (state.status === "signed-out") router.replace(`/login?next=${next}`);
+    if (state.status === "signed-out") router.replace(state.byUser ? "/" : `/login?next=${next}`);
     if (state.status === "needs-profile") router.replace(`/welcome?next=${next}`);
-  }, [state.status, router, pathname]);
+  }, [state, router, pathname]);
 
   if (state.status !== "ready") {
     const message = state.status === "loading" ? "Opening your workspace…" : state.status === "needs-profile" ? "Let's set up your profile…" : "Taking you to sign in…";

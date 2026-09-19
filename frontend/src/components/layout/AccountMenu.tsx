@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { firstName } from "@/lib/format";
@@ -10,7 +9,6 @@ import { useCurrentUser, useSession } from "@/lib/session";
 export function AccountMenu() {
   const user = useCurrentUser();
   const { signOut } = useSession();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -51,8 +49,8 @@ export function AccountMenu() {
             type="button"
             onClick={async () => {
               setOpen(false);
+              // The signed-in area sends people home after a deliberate sign-out.
               await signOut();
-              router.push("/");
             }}
             className="w-full rounded-btn px-3 py-2 text-left text-sm text-muted hover:bg-sunken hover:text-ink"
           >

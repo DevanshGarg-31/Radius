@@ -1,4 +1,6 @@
 import { CognitoJwtVerifier } from "aws-jwt-verify";
+import { SimpleFetcher } from "aws-jwt-verify/https";
+import { SimpleJwksCache } from "aws-jwt-verify/jwk";
 import type { Req } from "../router.js";
 import { config } from "../config.js";
 import type { Project } from "../models/project.js";
@@ -14,7 +16,14 @@ export interface Account {
   name?: string;
 }
 
-let verifier: ReturnType<typeof CognitoJwtVerifier.create<{ userPoolId: string; tokenUse: "id"; clientId: string }>> | undefined;
+function createVerifier(userPoolId: string, clientId: string) {
+  // Cognito's signing keys are fetched once and cached. The library's default
+  // 1.5 s timeout is too tight on slow networks, so allow longer for that one fetch.
+  const jwksCache = new SimpleJwksCache({ fetcher: new SimpleFetcher({ defaultRequestOptions: { responseTimeout: 8000 } }) });
+  return CognitoJwtVerifier.create({ userPoolId, tokenUse: "id", clientId }, { jwksCache });
+}
+
+let verifier: ReturnType<typeof createVerifier> | undefined;
 
 /**
  * Checks a Cognito ID token's signature, expiry, issuer and audience.
@@ -27,7 +36,7 @@ export async function verifyToken(token: string): Promise<Account> {
   }
   const { userPoolId, clientId } = config.auth;
   if (!userPoolId || !clientId) throw new HttpError(503, "Sign-in isn't configured on the server yet");
-  verifier ??= CognitoJwtVerifier.create({ userPoolId, tokenUse: "id", clientId });
+  verifier ??= createVerifier(userPoolId, clientId);
   try {
     const claims = await verifier.verify(token);
     return { sub: claims.sub, email: String(claims.email ?? ""), name: typeof claims.name === "string" ? claims.name : undefined };

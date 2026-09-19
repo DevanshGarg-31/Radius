@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { HeroGraph } from "@/components/network/HeroGraph";
+import { isGoogleEnabled } from "@/lib/amplify";
 
 /** Shared frame for sign-in, sign-up and onboarding: brand panel on the left, the task on the right. */
 export function AuthShell({ title, lede, children, wide = false }: { title: ReactNode; lede?: ReactNode; children: ReactNode; wide?: boolean }) {
@@ -34,8 +35,9 @@ export function AuthShell({ title, lede, children, wide = false }: { title: Reac
   );
 }
 
-/** "or" divider between Google and email sign-in. */
+/** Separates the Google button from the email form; hidden when Google sign-in is off. */
 export function OrDivider() {
+  if (!isGoogleEnabled) return null;
   return (
     <div className="my-6 flex items-center gap-3 font-mono text-xs font-bold uppercase text-muted" aria-hidden="true">
       <span className="h-0.5 flex-1 bg-ink/15" />
