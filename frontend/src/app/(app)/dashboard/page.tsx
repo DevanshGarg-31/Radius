@@ -163,7 +163,7 @@ export default function DashboardPage() {
             (active.length ? (
               <ul className="mt-5 space-y-5">
                 {active.map((p) => (
-                  <ProjectRow key={p.projectId} project={p} isOwner={p.ownerId === user.userId} />
+                  <ProjectRow key={p.projectId} project={p} isOwner={p.ownerId === user.userId} isMember />
                 ))}
               </ul>
             ) : (

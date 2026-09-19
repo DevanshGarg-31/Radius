@@ -5,6 +5,7 @@
  */
 import type { CachedExplanation, Project } from "../models/project.js";
 import type { CollaborationRequest } from "../models/request.js";
+import type { ChatMessage, RoomConnection } from "../models/room.js";
 import type { Team, TeamRole } from "../models/team.js";
 import type { User } from "../models/user.js";
 import { conflict } from "../utils/http.js";
@@ -15,6 +16,8 @@ const users = new Map<string, User>();
 const projects = new Map<string, Project>();
 const teams = new Map<string, Team>();
 const requests = new Map<string, CollaborationRequest>();
+const messages: ChatMessage[] = [];
+const connections = new Map<string, RoomConnection>();
 
 const clone = <T>(value: T): T => structuredClone(value);
 const all = <T>(map: Map<string, T>) => [...map.values()].map(clone);
@@ -24,6 +27,8 @@ export function resetMemoryStore(data: { users?: User[]; projects?: Project[]; t
   projects.clear();
   teams.clear();
   requests.clear();
+  messages.length = 0;
+  connections.clear();
   data.users?.forEach((u) => users.set(u.userId, clone(u)));
   data.projects?.forEach((p) => projects.set(p.projectId, clone(p)));
   data.teams?.forEach((t) => teams.set(t.teamId, clone(t)));
@@ -69,6 +74,13 @@ export const memoryStore: Omit<typeof dynamo, "INDEXES"> = {
     teams.set(team.teamId, clone(team));
     return true;
   },
+  setTeamMeeting: async (teamId, meeting) => {
+    const team = teams.get(teamId);
+    if (!team) return;
+    if (meeting) team.meeting = clone(meeting);
+    else delete team.meeting;
+    team.updatedAt = nowIso();
+  },
   listTeamsForMember: async (userId) => all(teams).filter((t) => t.members.includes(userId)),
 
   getRequest: async (requestId) => clone(requests.get(requestId)),
@@ -100,4 +112,14 @@ export const memoryStore: Omit<typeof dynamo, "INDEXES"> = {
     if (p.currentTeamSize >= p.teamSize) p.status = "full";
     p.updatedAt = now;
   },
+  putMessage: async (message) => void messages.push(clone(message)),
+  listMessages: async (projectId, { limit, after }) =>
+    messages
+      .filter((m) => m.projectId === projectId && (!after || m.sortKey > after))
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+      .slice(-limit)
+      .map(clone),
+  putConnection: async (connection) => void connections.set(connection.connectionId, clone(connection)),
+  deleteConnection: async (connectionId) => void connections.delete(connectionId),
+  listConnectionsByProject: async (projectId) => all(connections).filter((c) => c.projectId === projectId),
 };

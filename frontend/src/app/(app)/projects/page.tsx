@@ -8,7 +8,7 @@ import { useAsync } from "@/hooks/useAsync";
 import { useCurrentUser } from "@/lib/session";
 import { api, type Project } from "@/services/api";
 
-function Section({ id, title, projects, userId, empty }: { id: string; title: string; projects: Project[]; userId: string; empty?: React.ReactNode }) {
+function Section({ id, title, projects, userId, empty, member = false }: { id: string; title: string; projects: Project[]; userId: string; empty?: React.ReactNode; member?: boolean }) {
   if (!projects.length && !empty) return null;
   return (
     <section aria-labelledby={id} className="mt-12 first:mt-0">
@@ -18,7 +18,7 @@ function Section({ id, title, projects, userId, empty }: { id: string; title: st
       {projects.length ? (
         <ul className="mt-5 space-y-5">
           {projects.map((p) => (
-            <ProjectRow key={p.projectId} project={p} isOwner={p.ownerId === userId} />
+            <ProjectRow key={p.projectId} project={p} isOwner={p.ownerId === userId} isMember={member || p.ownerId === userId} />
           ))}
         </ul>
       ) : (
@@ -54,7 +54,7 @@ export default function ProjectsPage() {
             userId={me.userId}
             empty={<EmptyState title="You haven't started a project yet." body="Describe an idea and we'll help you find the people to build it with." action={<ButtonLink href="/projects/new">Start a project →</ButtonLink>} />}
           />
-          <Section id="joined" title="Teams you're on" projects={data.data.joined} userId={me.userId} />
+          <Section id="joined" title="Teams you're on" projects={data.data.joined} userId={me.userId} member />
           <Section id="open" title="Open projects in the network" projects={data.data.open} userId={me.userId} />
         </>
       )}

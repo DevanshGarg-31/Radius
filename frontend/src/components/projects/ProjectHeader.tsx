@@ -22,6 +22,8 @@ export function ProjectHeader({ project, owner, compact = false }: ProjectHeader
     { href: base, label: "Overview" },
     { href: `${base}/people`, label: "People" },
     { href: `${base}/team`, label: "Team" },
+    // The team room exists once someone has joined the founder.
+    ...(project.currentTeamSize >= 2 ? [{ href: `${base}/room`, label: "Team room" }] : []),
   ];
   return (
     <div className="border-b-[2.5px] border-ink bg-surface">

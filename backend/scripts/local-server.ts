@@ -5,9 +5,14 @@
  *   npm run dev          ->  http://localhost:4000 (real AWS services)
  *   npm run dev:memory   ->  same API with no AWS at all: in-memory data seeded with
  *                            the demo users/projects, Bedrock and OpenSearch fallbacks
+ *
+ * It also serves the team-room WebSocket at ws://localhost:4000/ws, standing in for
+ * the API Gateway WebSocket API (set NEXT_PUBLIC_WS_URL=ws://localhost:4000/ws).
  */
 import "dotenv/config";
+import { randomUUID } from "node:crypto";
 import { createServer } from "node:http";
+import { WebSocket, WebSocketServer } from "ws";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 
 const memory = process.argv.includes("--memory");
@@ -27,7 +32,20 @@ if (memory) {
 
 const port = Number(process.env.PORT ?? 4000);
 
-createServer(async (req, res) => {
+// Team-room WebSocket: the same Lambda handler, driven the way API Gateway drives it.
+const { setRealtimeSender } = await import("../src/services/realtime.js");
+const sockets = new Map<string, WebSocket>();
+setRealtimeSender(async (connectionId, data) => {
+  const socket = sockets.get(connectionId);
+  if (!socket || socket.readyState !== WebSocket.OPEN) return false;
+  socket.send(data);
+  return true;
+});
+const wss = new WebSocketServer({ noServer: true });
+const wsEvent = (connectionId: string, eventType: "CONNECT" | "DISCONNECT" | "MESSAGE", query: Record<string, string> = {}) =>
+  ({ requestContext: { connectionId, eventType }, queryStringParameters: query }) as unknown as APIGatewayProxyEventV2;
+
+const server = createServer(async (req, res) => {
   const chunks: Buffer[] = [];
   for await (const chunk of req) chunks.push(chunk as Buffer);
   const url = new URL(req.url ?? "/", `http://localhost:${port}`);
@@ -48,4 +66,25 @@ createServer(async (req, res) => {
   const result = await handler(event);
   res.writeHead(result.statusCode ?? 200, result.headers as Record<string, string>);
   res.end(result.body ?? "");
-}).listen(port, () => console.log(`Radius API running at http://localhost:${port}${memory ? " (in-memory demo data, no AWS)" : ""}`));
+});
+
+server.on("upgrade", async (req, socket, head) => {
+  const url = new URL(req.url ?? "/", `http://localhost:${port}`);
+  if (url.pathname !== "/ws") return socket.destroy();
+  const connectionId = randomUUID();
+  const result = await handler(wsEvent(connectionId, "CONNECT", Object.fromEntries(url.searchParams)));
+  if (result.statusCode !== 200) {
+    socket.write(`HTTP/1.1 ${result.statusCode} Refused\r\n\r\n`);
+    return socket.destroy();
+  }
+  wss.handleUpgrade(req, socket, head, (ws) => {
+    sockets.set(connectionId, ws);
+    ws.on("message", () => void handler(wsEvent(connectionId, "MESSAGE")));
+    ws.on("close", () => {
+      sockets.delete(connectionId);
+      void handler(wsEvent(connectionId, "DISCONNECT"));
+    });
+  });
+});
+
+server.listen(port, () => console.log(`Radius API running at http://localhost:${port}${memory ? " (in-memory demo data, no AWS)" : ""}`));

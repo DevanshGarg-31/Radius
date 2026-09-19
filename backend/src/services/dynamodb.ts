@@ -1,6 +1,7 @@
 import { DynamoDBClient, TransactionCanceledException } from "@aws-sdk/client-dynamodb";
 import {
   BatchGetCommand,
+  DeleteCommand,
   type BatchGetCommandOutput,
   DynamoDBDocumentClient,
   GetCommand,
@@ -14,7 +15,8 @@ import {
 import { config } from "../config.js";
 import type { CachedExplanation, Project } from "../models/project.js";
 import type { CollaborationRequest } from "../models/request.js";
-import type { Team, TeamRole } from "../models/team.js";
+import type { ChatMessage, RoomConnection } from "../models/room.js";
+import type { Team, TeamMeeting, TeamRole } from "../models/team.js";
 import type { User } from "../models/user.js";
 import { conflict } from "../utils/http.js";
 import { nowIso } from "../utils/ids.js";
@@ -30,6 +32,7 @@ export const INDEXES = {
   projectsByOwner: "ownerId-index",
   requestsByProject: "projectId-index",
   requestsByInvitee: "toUserId-index",
+  connectionsByProject: "projectId-index",
 } as const;
 
 async function scanAll<T>(input: ScanCommandInput): Promise<T[]> {
@@ -176,6 +179,18 @@ export async function createTeamIfMissing(team: Team): Promise<boolean> {
   }
 }
 
+/** Records the team's current call, or clears it when meeting is undefined. */
+export async function setTeamMeeting(teamId: string, meeting: TeamMeeting | undefined): Promise<void> {
+  await doc.send(
+    new UpdateCommand({
+      TableName: T.teams,
+      Key: { teamId },
+      UpdateExpression: meeting ? "SET meeting = :m, updatedAt = :u" : "REMOVE meeting SET updatedAt = :u",
+      ExpressionAttributeValues: meeting ? { ":m": meeting, ":u": nowIso() } : { ":u": nowIso() },
+    }),
+  );
+}
+
 export const listTeamsForMember = (userId: string) =>
   scanAll<Team>({
     TableName: T.teams,
@@ -287,3 +302,34 @@ export async function acceptRequest(request: CollaborationRequest, project: Proj
     throw err;
   }
 }
+
+// ---------- Team room: messages and live connections ----------
+
+export async function putMessage(message: ChatMessage): Promise<void> {
+  await doc.send(new PutCommand({ TableName: T.messages, Item: message }));
+}
+
+/** Newest messages first from DynamoDB, returned oldest-first for display. after = only messages with a later sort key. */
+export async function listMessages(projectId: string, opts: { limit: number; after?: string }): Promise<ChatMessage[]> {
+  const res = await doc.send(
+    new QueryCommand({
+      TableName: T.messages,
+      KeyConditionExpression: opts.after ? "projectId = :p AND sortKey > :a" : "projectId = :p",
+      ExpressionAttributeValues: opts.after ? { ":p": projectId, ":a": opts.after } : { ":p": projectId },
+      ScanIndexForward: false,
+      Limit: opts.limit,
+    }),
+  );
+  return ((res.Items ?? []) as ChatMessage[]).reverse();
+}
+
+export async function putConnection(connection: RoomConnection): Promise<void> {
+  await doc.send(new PutCommand({ TableName: T.connections, Item: connection }));
+}
+
+export async function deleteConnection(connectionId: string): Promise<void> {
+  await doc.send(new DeleteCommand({ TableName: T.connections, Key: { connectionId } }));
+}
+
+export const listConnectionsByProject = (projectId: string) =>
+  queryIndex<RoomConnection>(T.connections, INDEXES.connectionsByProject, "projectId", projectId);

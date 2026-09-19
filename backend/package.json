@@ -21,6 +21,8 @@
   "dependencies": {
     "@anthropic-ai/bedrock-sdk": "^0.33.7",
     "@anthropic-ai/sdk": "^0.127.0",
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.1136.0",
+    "@aws-sdk/client-chime-sdk-meetings": "^3.1136.0",
     "@aws-sdk/client-dynamodb": "^3.1136.0",
     "@aws-sdk/client-s3": "^3.1136.0",
     "@aws-sdk/credential-provider-node": "^3.972.83",
@@ -33,11 +35,13 @@
     "@types/archiver": "^8.0.0",
     "@types/aws-lambda": "^8.10.163",
     "@types/node": "^26.6.2",
+    "@types/ws": "^8.18.1",
     "archiver": "^8.0.0",
     "dotenv": "^18.0.1",
     "esbuild": "^0.28.2",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2",
-    "vitest": "^5.0.1"
+    "vitest": "^5.0.1",
+    "ws": "^8.21.3"
   }
 }

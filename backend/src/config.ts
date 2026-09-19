@@ -7,6 +7,16 @@ export const config = {
     projects: env("DYNAMODB_PROJECTS_TABLE", "radius-projects"),
     requests: env("DYNAMODB_REQUESTS_TABLE", "radius-requests"),
     teams: env("DYNAMODB_TEAMS_TABLE", "radius-teams"),
+    messages: env("DYNAMODB_MESSAGES_TABLE", "radius-messages"),
+    connections: env("DYNAMODB_CONNECTIONS_TABLE", "radius-connections"),
+  },
+  realtime: {
+    /** https://{api-id}.execute-api.{region}.amazonaws.com/{stage} of the WebSocket API. Empty = no push (clients poll). */
+    managementUrl: env("WS_MANAGEMENT_URL"),
+  },
+  chime: {
+    /** Where call media is hosted; Mumbai keeps latency low for the team. */
+    mediaRegion: env("CHIME_MEDIA_REGION", "ap-south-1"),
   },
   s3Bucket: env("S3_BUCKET"),
   opensearch: {
