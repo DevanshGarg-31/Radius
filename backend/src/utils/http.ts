@@ -13,14 +13,14 @@ export class HttpError extends Error {
 }
 
 export const badRequest = (message: string, details?: unknown) => new HttpError(400, message, details);
-export const unauthorized = (message = "Missing or unknown X-User-Id header") => new HttpError(401, message);
+export const unauthorized = (message = "Sign in to continue") => new HttpError(401, message);
 export const forbidden = (message = "You are not allowed to do this") => new HttpError(403, message);
 export const notFound = (what: string) => new HttpError(404, `${what} not found`);
 export const conflict = (message: string) => new HttpError(409, message);
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": config.corsOrigin,
-  "Access-Control-Allow-Headers": "Content-Type,X-User-Id",
+  "Access-Control-Allow-Headers": "Content-Type,Authorization",
   "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS",
 };
 
@@ -58,10 +58,4 @@ export function parseBody<T extends z.ZodType>(event: APIGatewayProxyEventV2, sc
     }
   }
   return schema.parse(raw);
-}
-
-/** Demo auth: the frontend sends the logged-in demo user's id in X-User-Id. */
-export function callerId(event: APIGatewayProxyEventV2): string | undefined {
-  const headers = event.headers ?? {};
-  return headers["x-user-id"] ?? headers["X-User-Id"];
 }

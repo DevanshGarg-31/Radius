@@ -29,7 +29,7 @@ function MatchesInner() {
   const user = useCurrentUser();
   const project = useProject();
   const focus = useSearchParams().get("focus") ?? undefined;
-  const matches = useAsync(() => api.getMatches(user.userId, project.projectId), [project.projectId, user.userId]);
+  const matches = useAsync(() => api.getMatches(project.projectId), [project.projectId, user.userId]);
   const [detail, setDetail] = useState<Match | null>(null);
   const [inviting, setInviting] = useState<Match | null>(null);
 

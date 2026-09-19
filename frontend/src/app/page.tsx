@@ -113,10 +113,10 @@ export default function LandingPage() {
                     Describe what you want to build. Find people who can help make it happen. Build the team you need.
                   </p>
                   <div className="mt-9 flex flex-wrap gap-4">
-                    <ButtonLink href="/login?next=/projects/new" size="lg" variant="pop">
+                    <ButtonLink href="/signup?next=/projects/new" size="lg" variant="pop">
                       Start building →
                     </ButtonLink>
-                    <ButtonLink href="/login?next=/discover" size="lg" variant="secondary">
+                    <ButtonLink href="/signup?next=/discover" size="lg" variant="secondary">
                       Explore people
                     </ButtonLink>
                   </div>
@@ -134,7 +134,7 @@ export default function LandingPage() {
                         </span>
                       ))}
                     </div>
-                    <p className="font-mono text-xs font-bold uppercase">25 builders in the demo network</p>
+                    <p className="font-mono text-xs font-bold uppercase">Builders, designers and organizers are already here</p>
                   </div>
                 </Reveal>
               </div>
@@ -251,7 +251,7 @@ export default function LandingPage() {
                 <h2 className="max-w-2xl text-[42px] font-extrabold leading-[1] sm:text-[60px]">Your next collaborator is already out there.</h2>
               </Reveal>
               <Reveal delay={0.1}>
-                <ButtonLink href="/login?next=/projects/new" size="lg">
+                <ButtonLink href="/signup?next=/projects/new" size="lg">
                   Start building →
                 </ButtonLink>
               </Reveal>

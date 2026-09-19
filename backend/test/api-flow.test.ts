@@ -17,7 +17,7 @@ async function call(method: string, path: string, opts: { as?: string; body?: un
     rawPath,
     rawQueryString: qs,
     queryStringParameters: qs ? Object.fromEntries(new URLSearchParams(qs)) : undefined,
-    headers: opts.as ? { "x-user-id": opts.as } : {},
+    headers: opts.as ? { authorization: `Bearer dev:${opts.as}` } : {},
     body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
     isBase64Encoded: false,
     requestContext: { http: { method }, requestId: "test", stage: "$default" },
@@ -33,9 +33,10 @@ beforeEach(() => {
 
 describe("IDEA -> MATCH -> TEAM", () => {
   it("runs the full demo journey", async () => {
-    const login = await call("POST", "/auth/demo-login", { body: { username: "aarav" } });
-    expect(login.status).toBe(200);
-    const founder = login.body.user.userId;
+    const me = await call("GET", "/me", { as: "u001" });
+    expect(me.status).toBe(200);
+    const founder = me.body.user.userId;
+    expect(founder).toBe("u001");
 
     const created = await call("POST", "/projects", {
       as: founder,
@@ -71,7 +72,7 @@ describe("IDEA -> MATCH -> TEAM", () => {
     expect(accepted.status).toBe(200);
     expect(accepted.body.team.members).toEqual([founder, "u002"]);
 
-    const team = await call("GET", `/projects/${projectId}/team`);
+    const team = await call("GET", `/projects/${projectId}/team`, { as: founder });
     expect(team.body.members.map((m: { name: string }) => m.name)).toEqual(["Aarav Mehta", "Rahul Sharma"]);
     expect(team.body.project.currentTeamSize).toBe(2);
 
@@ -93,8 +94,8 @@ describe("IDEA -> MATCH -> TEAM", () => {
   it("lists projects for owners and members", async () => {
     const team = DEMO_TEAMS.find((t) => t.members.length > 1)!;
     resetMemoryStore({ users: DEMO_USERS, projects: [{ projectId: team.projectId, ownerId: team.members[0]!, createdAt: "2026-01-01", status: "open" } as Project], teams: [team] });
-    expect((await call("GET", `/projects?ownerId=${team.members[0]}`)).body.projects).toHaveLength(1);
-    expect((await call("GET", `/projects?memberId=${team.members[1]}`)).body.projects).toHaveLength(1);
-    expect((await call("GET", "/projects?memberId=u002")).body.projects).toHaveLength(0);
+    expect((await call("GET", `/projects?ownerId=${team.members[0]}`, { as: "u001" })).body.projects).toHaveLength(1);
+    expect((await call("GET", `/projects?memberId=${team.members[1]}`, { as: "u001" })).body.projects).toHaveLength(1);
+    expect((await call("GET", "/projects?memberId=u002", { as: "u001" })).body.projects).toHaveLength(0);
   });
 });

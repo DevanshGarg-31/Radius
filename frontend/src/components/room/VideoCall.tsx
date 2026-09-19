@@ -93,7 +93,7 @@ export function VideoCall({ projectId, meId, members, call, onCallStarted }: Vid
     setError(undefined);
     setNotice(undefined);
     try {
-      const joined = await api.joinCall(meId, projectId);
+      const joined = await api.joinCall(projectId);
       if (joined.started) onCallStarted({ meetingId: joined.meeting.MeetingId, startedBy: meId, startedAt: new Date().toISOString() });
       const chime = await import("amazon-chime-sdk-js");
       const logger = new chime.ConsoleLogger("radius-call", chime.LogLevel.ERROR);

@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { INVITATIONS_CHANGED } from "@/components/layout/Navbar";
 import { PageContainer, PageHeader } from "@/components/layout/PageContainer";
@@ -10,8 +9,8 @@ import { Button, ButtonLink } from "@/components/ui/Button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
 import { useAsync } from "@/hooks/useAsync";
 import { humanError } from "@/lib/errors";
-import { capitalise, firstName } from "@/lib/format";
-import { useCurrentUser, useSession } from "@/lib/session";
+import { capitalise } from "@/lib/format";
+import { useCurrentUser } from "@/lib/session";
 import { api, type Invitation, type TeamResponse } from "@/services/api";
 
 interface Joined {
@@ -20,9 +19,6 @@ interface Joined {
 }
 
 function TeamFormed({ joined, me }: { joined: Joined; me: { userId: string; name: string } }) {
-  const { signIn } = useSession();
-  const router = useRouter();
-  const founder = joined.invitation.fromUser;
   const projectId = joined.invitation.projectId;
   return (
     <section className="animate-fade" aria-live="polite">
@@ -48,17 +44,6 @@ function TeamFormed({ joined, me }: { joined: Joined; me: { userId: string; name
           <ButtonLink href={`/projects/${projectId}/team?joined=${me.userId}`} variant="secondary">
             See the team
           </ButtonLink>
-          {founder && (
-            <Button
-              variant="secondary"
-              onClick={async () => {
-                await signIn({ userId: founder.userId });
-                router.push(`/projects/${projectId}/team?joined=${me.userId}`);
-              }}
-            >
-              Back to {firstName(founder.name)}&apos;s view →
-            </Button>
-          )}
         </div>
       </div>
     </section>
@@ -66,7 +51,6 @@ function TeamFormed({ joined, me }: { joined: Joined; me: { userId: string; name
 }
 
 function InvitationItem({ invitation, onAnswered }: { invitation: Invitation; onAnswered: (status: "accepted" | "rejected", team?: TeamResponse) => void }) {
-  const me = useCurrentUser();
   const [busy, setBusy] = useState<"accepted" | "rejected">();
   const [error, setError] = useState<string>();
 
@@ -74,7 +58,7 @@ function InvitationItem({ invitation, onAnswered }: { invitation: Invitation; on
     setBusy(status);
     setError(undefined);
     try {
-      await api.respond(me.userId, invitation.requestId, status);
+      await api.respond(invitation.requestId, status);
       window.dispatchEvent(new Event(INVITATIONS_CHANGED));
       const team = status === "accepted" ? await api.getTeam(invitation.projectId) : undefined;
       onAnswered(status, team);

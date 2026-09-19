@@ -1,11 +1,10 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
-import { callerId, notFound } from "./utils/http.js";
+import { notFound } from "./utils/http.js";
 
 export interface Req {
   event: APIGatewayProxyEventV2;
   params: Record<string, string>;
   query: Record<string, string>;
-  callerId?: string;
 }
 
 export type Handler = (req: Req) => Promise<APIGatewayProxyStructuredResultV2>;
@@ -60,7 +59,7 @@ export class Router {
       if (!m) continue;
       const params = Object.fromEntries(r.keys.map((k, i) => [k, decodeURIComponent(m[i + 1] ?? "")]));
       const query = Object.fromEntries(Object.entries(event.queryStringParameters ?? {}).map(([k, v]) => [k, v ?? ""]));
-      const req: Req = { event, params, query, callerId: callerId(event) };
+      const req: Req = { event, params, query };
       return { route: `${method} ${r.pattern}`, run: () => r.handler(req) };
     }
     return {

@@ -16,7 +16,7 @@ import { useCurrentUser } from "@/lib/session";
 import { api, type Analysis } from "@/services/api";
 
 function SentInvitations({ projectId, userId }: { projectId: string; userId: string }) {
-  const sent = useAsync(() => api.projectRequests(userId, projectId).then((r) => r.requests), [projectId, userId]);
+  const sent = useAsync(() => api.projectRequests(projectId).then((r) => r.requests), [projectId, userId]);
   if (sent.status !== "success" || !sent.data.length) return null;
   return (
     <section aria-labelledby="sent" className="mt-16">
@@ -41,12 +41,12 @@ function SentInvitations({ projectId, userId }: { projectId: string; userId: str
   );
 }
 
-function AnalyzeNow({ projectId, userId, onDone }: { projectId: string; userId: string; onDone: () => void }) {
+function AnalyzeNow({ projectId, onDone }: { projectId: string; onDone: () => void }) {
   const [state, setState] = useState<{ running: boolean; analysis?: Analysis; error?: unknown }>({ running: false });
   async function run() {
     setState({ running: true });
     try {
-      setState({ running: true, analysis: await api.analyzeProject(userId, projectId) });
+      setState({ running: true, analysis: await api.analyzeProject(projectId) });
     } catch (error) {
       setState({ running: false, error });
     }
@@ -87,7 +87,7 @@ export default function ProjectPage() {
         {analyzed ? (
           <ProjectRequirements title={p.title} skills={p.requiredSkills} roles={p.requiredRoles} requirements={p.aiRequirements?.requirements} teamSize={p.teamSize} />
         ) : isOwner ? (
-          <AnalyzeNow projectId={p.projectId} userId={user.userId} onDone={project.reload} />
+          <AnalyzeNow projectId={p.projectId} onDone={project.reload} />
         ) : (
           <p className="text-[17px] text-muted">The founder hasn&apos;t worked out what this project needs yet.</p>
         )}

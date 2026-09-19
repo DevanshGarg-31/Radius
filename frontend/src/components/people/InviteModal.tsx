@@ -1,13 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Select, Textarea } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { humanError } from "@/lib/errors";
 import { firstName, joinNatural } from "@/lib/format";
-import { useCurrentUser, useSession } from "@/lib/session";
 import { api, type CollaborationRequest, type Match } from "@/services/api";
 
 interface InviteModalProps {
@@ -26,9 +24,6 @@ function suggestedMessage(person: InviteModalProps["person"], title: string): st
 }
 
 export function InviteModal({ open, onClose, project, person, onSent }: InviteModalProps) {
-  const me = useCurrentUser();
-  const { signIn } = useSession();
-  const router = useRouter();
   const roles = [...new Set([person.suggestedRole, ...project.requiredRoles])].filter((r) => r && r !== "Collaborator");
   const [role, setRole] = useState(roles[0] ?? "Collaborator");
   const [message, setMessage] = useState(() => suggestedMessage(person, project.title));
@@ -40,18 +35,13 @@ export function InviteModal({ open, onClose, project, person, onSent }: InviteMo
     setState("sending");
     setError(undefined);
     try {
-      const { request } = await api.invite(me.userId, project.projectId, { toUserId: person.userId, message, role });
+      const { request } = await api.invite(project.projectId, { toUserId: person.userId, message, role });
       setState("sent");
       onSent(request);
     } catch (err) {
       setError(humanError(err, "We couldn't send the invitation. Nothing was sent; try again."));
       setState("form");
     }
-  }
-
-  async function switchToInvitee() {
-    await signIn({ userId: person.userId });
-    router.push("/invitations");
   }
 
   if (state === "sent") {
@@ -61,14 +51,10 @@ export function InviteModal({ open, onClose, project, person, onSent }: InviteMo
           <p className="text-[15px] leading-relaxed">
             {name} will find your invitation to join <strong>{project.title}</strong> as <strong>{role}</strong> in their invitations.
           </p>
-          <p className="text-[15px] leading-relaxed text-muted">We&apos;ll add them to the team as soon as they accept.</p>
+          <p className="text-[15px] leading-relaxed text-muted">They&apos;ll see it under Invitations when they sign in. As soon as they accept, they join the team and the team room opens.</p>
           <div className="flex flex-wrap gap-2 pt-3">
-            <Button onClick={switchToInvitee}>Switch to {name}&apos;s account →</Button>
-            <Button variant="secondary" onClick={onClose}>
-              Keep looking
-            </Button>
+            <Button onClick={onClose}>Keep looking</Button>
           </div>
-          <p className="pt-1 text-[13px] text-muted">Demo: switching accounts lets you accept as {name}.</p>
         </div>
       </Modal>
     );

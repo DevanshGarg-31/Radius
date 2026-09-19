@@ -86,7 +86,7 @@ export default function NewProjectPage() {
   async function analyze(projectId: string) {
     setStage({ name: "analyzing", projectId });
     try {
-      const analysis = await api.analyzeProject(user.userId, projectId);
+      const analysis = await api.analyzeProject(projectId);
       setStage({ name: "analyzing", projectId, analysis });
     } catch (error) {
       setStage({ name: "failed", projectId, error });
@@ -102,7 +102,7 @@ export default function NewProjectPage() {
 
     setStage({ name: "analyzing", projectId: "" });
     try {
-      const { projectId } = await api.createProject(user.userId, { title: title.trim(), description: description.trim(), teamSize, remote, location: remote ? "" : location.trim() });
+      const { projectId } = await api.createProject({ title: title.trim(), description: description.trim(), teamSize, remote, location: remote ? "" : location.trim() });
       clearDraft();
       await analyze(projectId);
     } catch (error) {
