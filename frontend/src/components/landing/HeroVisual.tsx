@@ -8,8 +8,8 @@ import { HeroGraph } from "@/components/network/HeroGraph";
 /** The dotLottie player draws on a canvas with WebAssembly, so it only ever runs in the browser. */
 const DotLottieReact = dynamic(() => import("@lottiefiles/dotlottie-react").then((m) => m.DotLottieReact), { ssr: false });
 
-/** Where the landing animation lives: drop hero.lottie (preferred) or hero.json into public/lottie/. */
-const LOTTIE_CANDIDATES = ["/lottie/hero.lottie", "/lottie/hero.json"];
+/** Where the landing animation lives: drop hero.json or hero.lottie into public/lottie/. */
+const LOTTIE_CANDIDATES = ["/lottie/hero.json", "/lottie/hero.lottie"];
 
 type LottieState = { status: "loading" } | { status: "ready"; src: string } | { status: "missing" };
 
@@ -85,9 +85,9 @@ export function HeroVisual() {
           <span className="size-3 rounded-full border-2 border-ink bg-tomato" />
           <span className="size-3 rounded-full border-2 border-ink bg-mustard" />
           <span className="size-3 rounded-full border-2 border-ink bg-teal" />
-          <span className="ml-3 font-mono text-xs font-bold">radius.app / finding-your-people</span>
+          <span className="ml-3 min-w-0 truncate font-mono text-xs font-bold">radius.app / finding-your-people</span>
         </div>
-        <div className="dot-grid relative aspect-[5/4] bg-mint/40">
+        <div className="dot-grid relative aspect-video bg-[#eef8ef]">
           {showAnimation ? (
             <DotLottieReact
               src={lottie.src}
