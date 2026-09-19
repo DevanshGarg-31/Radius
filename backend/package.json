@@ -15,6 +15,7 @@
     "build": "node scripts/build.mjs",
     "create-indices": "tsx scripts/create-indices.ts",
     "seed": "tsx scripts/seed.ts",
+    "search:check": "tsx scripts/search-check.ts",
     "deploy": "npm run build && aws lambda update-function-code --function-name radius-api --zip-file fileb://dist/lambda.zip"
   },
   "dependencies": {
