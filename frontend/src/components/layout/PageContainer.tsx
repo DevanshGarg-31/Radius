@@ -9,9 +9,9 @@ export function PageHeader({ eyebrow, title, lede, actions }: { eyebrow?: ReactN
   return (
     <header className="flex flex-col gap-6 pb-8 pt-10 sm:flex-row sm:items-end sm:justify-between sm:pt-14">
       <div className="max-w-2xl animate-rise">
-        {eyebrow && <p className="eyebrow mb-3">{eyebrow}</p>}
-        <h1 className="text-[32px] font-extrabold leading-[1.1] sm:text-[40px]">{title}</h1>
-        {lede && <p className="mt-3 text-[17px] leading-relaxed text-muted">{lede}</p>}
+        {eyebrow && <p className="mb-4 inline-block -rotate-1 rounded-btn border-2 border-ink bg-lilac px-2.5 py-1 font-mono text-xs font-bold uppercase shadow-brutal-sm">{eyebrow}</p>}
+        <h1 className="text-[36px] font-extrabold leading-[1.02] sm:text-[48px]">{title}</h1>
+        {lede && <p className="mt-3 text-[17px] leading-relaxed text-ink-soft">{lede}</p>}
       </div>
       {actions && <div className="flex shrink-0 gap-2">{actions}</div>}
     </header>

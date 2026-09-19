@@ -9,8 +9,8 @@ export function PersonProfile({ user, projects, actions }: { user: User; project
     <article className="grid gap-12 pb-10 pt-12 md:grid-cols-[1.3fr_1fr] md:pt-16">
       <div className="animate-rise">
         <Avatar name={user.name} seed={user.userId} src={user.avatarUrl || undefined} size={72} />
-        <h1 className="mt-6 text-[36px] font-extrabold leading-tight sm:text-[44px]">{user.name}</h1>
-        <p className="mt-1 text-[15px] text-muted">
+        <h1 className="mt-6 text-[44px] font-extrabold leading-[1] sm:text-[60px]">{user.name}</h1>
+        <p className="mt-3 font-mono text-sm font-bold text-ink-soft">
           @{user.username}
           {user.location && ` · ${user.location}`} · {capitalise(user.experienceLevel)}
         </p>
@@ -21,9 +21,9 @@ export function PersonProfile({ user, projects, actions }: { user: User; project
       <div className="space-y-10 md:pt-24">
         <section>
           <h2 className="eyebrow mb-3">Can help with</h2>
-          <ul className="space-y-1">
-            {user.skills.map((s) => (
-              <li key={s} className="text-lg font-semibold">
+          <ul className="flex flex-wrap gap-2">
+            {user.skills.map((s, i) => (
+              <li key={s} className={`rounded-btn border-2 border-ink px-3 py-1 font-display text-lg font-bold shadow-brutal-sm ${["bg-mustard", "bg-mint", "bg-sky", "bg-pink", "bg-lilac"][i % 5]}`}>
                 {s}
               </li>
             ))}

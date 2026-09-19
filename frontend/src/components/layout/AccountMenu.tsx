@@ -64,7 +64,7 @@ export function AccountMenu() {
       </button>
 
       {open && (
-        <div role="menu" className="absolute right-0 top-full z-40 mt-2 w-72 animate-rise rounded-card border border-line bg-surface p-2 shadow-lift">
+        <div role="menu" className="absolute right-0 top-full z-40 mt-2 w-72 animate-rise rounded-card border-[2.5px] border-ink bg-surface p-2 shadow-brutal">
           <div className="px-3 pb-3 pt-2">
             <p className="text-sm font-semibold">{user.name}</p>
             <p className="text-[13px] text-muted">@{user.username}</p>

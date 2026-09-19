@@ -19,7 +19,7 @@ function SearchCaption({ data }: { data: MatchesResponse }) {
   const { searchMeta } = data;
   const via = searchMeta.source === "opensearch" ? `searched with OpenSearch in ${searchMeta.tookMs} ms` : "searched the network directly";
   return (
-    <p className="text-sm text-muted">
+    <p className="font-mono text-xs font-bold uppercase text-ink-soft">
       {searchMeta.candidatesConsidered} {searchMeta.candidatesConsidered === 1 ? "person" : "people"} found · {via}
     </p>
   );
@@ -52,7 +52,7 @@ function MatchesInner() {
       <PageContainer className="pt-10">
         <div className="flex flex-col gap-3 pb-8 sm:flex-row sm:items-end sm:justify-between">
           <div className="animate-rise">
-            <h2 className="text-[28px] font-extrabold leading-tight">People for your project</h2>
+            <h2 className="text-[36px] font-extrabold leading-[1.02] sm:text-[44px]">People for your project</h2>
             {matches.status === "success" && (
               <div className="mt-2 space-y-1">
                 <SearchCaption data={matches.data} />
@@ -66,7 +66,7 @@ function MatchesInner() {
         </div>
 
         {focus && (
-          <div className="mb-6 flex animate-rise items-center justify-between gap-4 border-l-2 border-warm bg-warm-soft px-5 py-3">
+          <div className="mb-6 flex animate-rise items-center justify-between gap-4 rounded-card border-[2.5px] border-ink bg-mustard px-5 py-3 shadow-brutal-sm">
             <p className="text-[15px]">
               Focused on <strong>{focus}</strong>, the gap in your team. People who cover it are marked.
             </p>
@@ -99,7 +99,7 @@ function MatchesInner() {
 
         {matches.status === "success" &&
           (matches.data.matches.length ? (
-            <ol className="overflow-hidden rounded-panel border border-line bg-surface shadow-soft">
+            <ol className="space-y-6">
               {matches.data.matches.map((m, i) => (
                 <MatchRow key={m.userId} match={m} index={i} focus={focus} onExplain={() => setDetail(m)} onInvite={() => isOwner && setInviting(m)} />
               ))}

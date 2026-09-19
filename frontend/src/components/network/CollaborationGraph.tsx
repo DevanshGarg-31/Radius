@@ -37,9 +37,9 @@ interface CollaborationGraphProps {
 }
 
 const EDGE_STYLE: Record<NonNullable<GraphEdge["tone"]>, { stroke: string; width: number; dash?: string }> = {
-  default: { stroke: "var(--color-line-strong)", width: 1.25 },
-  strong: { stroke: "var(--color-ink)", width: 1.5 },
-  missing: { stroke: "var(--color-warm)", width: 1.5, dash: "4 4" },
+  default: { stroke: "rgba(18,18,18,0.35)", width: 1.5 },
+  strong: { stroke: "var(--color-ink)", width: 2 },
+  missing: { stroke: "var(--color-tomato)", width: 2, dash: "5 4" },
 };
 
 const RADIUS: Record<NodeKind, number> = { project: 11, person: 17, skill: 6, interest: 5, missing: 13 };
@@ -69,7 +69,7 @@ function NodeShape({ node }: { node: GraphNode }) {
       const tone = avatarTone(node.seed ?? node.label);
       return (
         <>
-          <circle cx={x} cy={y} r={17} fill={tone.bg} stroke="var(--color-canvas)" strokeWidth={3} />
+          <circle cx={x} cy={y} r={17} fill={tone.bg} stroke="var(--color-ink)" strokeWidth={2} />
           <text x={x} y={y + 4.5} textAnchor="middle" fontSize={12} fontWeight={700} fill={tone.fg} fontFamily="var(--font-display)">
             {initials(node.label)}
           </text>
@@ -79,17 +79,17 @@ function NodeShape({ node }: { node: GraphNode }) {
     case "skill":
       return (
         <>
-          <circle cx={x} cy={y} r={6} fill={node.checked ? "var(--color-accent)" : "var(--color-surface)"} stroke="var(--color-accent)" strokeWidth={2} />
-          {node.checked && <path d={`M${x - 2.6} ${y + 0.2}l1.8 1.8 3.4-3.6`} stroke="white" strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round" />}
+          <circle cx={x} cy={y} r={6.5} fill={node.checked ? "var(--color-mint)" : "var(--color-surface)"} stroke="var(--color-ink)" strokeWidth={2} />
+          {node.checked && <path d={`M${x - 2.6} ${y + 0.2}l1.8 1.8 3.4-3.6`} stroke="var(--color-ink)" strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" />}
         </>
       );
     case "interest":
-      return <circle cx={x} cy={y} r={5} fill="var(--color-warm)" />;
+      return <circle cx={x} cy={y} r={5.5} fill="var(--color-mustard)" stroke="var(--color-ink)" strokeWidth={1.5} />;
     case "missing":
       return (
         <>
-          <circle cx={x} cy={y} r={13} fill="var(--color-warm-soft)" stroke="var(--color-warm)" strokeWidth={1.75} strokeDasharray="4 3" />
-          <text x={x} y={y + 5} textAnchor="middle" fontSize={14} fontWeight={700} fill="var(--color-warm-ink)" fontFamily="var(--font-display)">
+          <circle cx={x} cy={y} r={13} fill="var(--color-mustard)" stroke="var(--color-ink)" strokeWidth={2} strokeDasharray="4 3" />
+          <text x={x} y={y + 5} textAnchor="middle" fontSize={14} fontWeight={800} fill="var(--color-ink)" fontFamily="var(--font-display)">
             ?
           </text>
         </>
@@ -151,7 +151,7 @@ export function CollaborationGraph({ nodes, edges, width, height, title, animate
                   fontWeight={node.kind === "project" || node.kind === "missing" ? 700 : 500}
                   fontFamily={node.kind === "project" ? "var(--font-display)" : "var(--font-sans)"}
                   fill={node.kind === "missing" ? "var(--color-warm-ink)" : muted ? "var(--color-muted)" : "var(--color-ink)"}
-                  stroke="var(--color-canvas)"
+                  stroke="var(--color-surface)"
                   strokeWidth={4}
                   paintOrder="stroke"
                   strokeLinejoin="round"

@@ -1,17 +1,21 @@
 import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-type Variant = "primary" | "secondary" | "quiet" | "accent";
+type Variant = "primary" | "secondary" | "quiet" | "accent" | "pop";
 type Size = "sm" | "md" | "lg";
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-btn font-medium whitespace-nowrap transition-[background-color,border-color,color,box-shadow] duration-150 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-btn font-semibold whitespace-nowrap transition-[transform,box-shadow,background-color,color] duration-150 disabled:cursor-not-allowed disabled:opacity-50";
+
+/** Neo-brutalist press: lifts on hover, sinks into its shadow when pressed. */
+const press = "border-2 border-ink shadow-brutal-sm hover:-translate-x-px hover:-translate-y-px hover:shadow-brutal active:translate-x-0.5 active:translate-y-0.5 active:shadow-none";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-ink text-white hover:bg-ink-soft shadow-soft",
-  secondary: "bg-surface text-ink border border-line hover:border-line-strong shadow-soft",
+  primary: `bg-ink text-canvas ${press}`,
+  secondary: `bg-surface text-ink ${press}`,
   quiet: "text-ink hover:bg-sunken",
-  accent: "bg-accent text-white hover:bg-[#1d4fd8] shadow-soft",
+  accent: `bg-accent text-white ${press}`,
+  pop: `bg-tomato text-ink ${press}`,
 };
 
 const sizes: Record<Size, string> = {

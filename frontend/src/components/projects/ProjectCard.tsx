@@ -16,10 +16,10 @@ export function nextStep(project: Project, isOwner: boolean): { label: string; h
 export function ProjectRow({ project, isOwner }: { project: Project; isOwner: boolean }) {
   const step = nextStep(project, isOwner);
   return (
-    <li className="grid gap-4 py-6 sm:grid-cols-[1fr_220px] sm:items-center">
+    <li className="grid gap-4 rounded-panel border-[2.5px] border-ink bg-surface p-5 shadow-brutal sm:grid-cols-[1fr_220px] sm:items-center">
       <div className="min-w-0">
         {project.category && <p className="eyebrow mb-1.5">{project.category}</p>}
-        <Link href={`/projects/${project.projectId}`} className="font-display text-xl font-bold hover:underline">
+        <Link href={`/projects/${project.projectId}`} className="font-display text-2xl font-extrabold leading-tight hover:underline">
           {project.title}
         </Link>
         <p className="mt-1 line-clamp-2 max-w-2xl text-[15px] text-muted">{project.description}</p>
@@ -29,7 +29,7 @@ export function ProjectRow({ project, isOwner }: { project: Project; isOwner: bo
           <strong className="font-semibold text-ink">{project.currentTeamSize}</strong> / {project.teamSize} collaborators
         </p>
         <Progress value={project.currentTeamSize} max={project.teamSize} label={`${project.title} team filled`} />
-        <Link href={step.href} className="inline-block pt-1 text-sm font-medium underline decoration-line-strong underline-offset-4 hover:decoration-ink">
+        <Link href={step.href} className="mt-1 inline-block rounded-btn border-2 border-ink bg-mustard px-3 py-1 text-sm font-bold shadow-brutal-sm transition-[transform,box-shadow] hover:-translate-y-px hover:shadow-brutal active:translate-y-0.5 active:shadow-none">
           {step.label} →
         </Link>
       </div>

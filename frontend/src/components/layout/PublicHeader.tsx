@@ -8,31 +8,36 @@ import { useSession } from "@/lib/session";
 export function PublicHeader() {
   const { user } = useSession();
   return (
-    <header className="mx-auto flex h-20 max-w-[1200px] items-center gap-6 px-4 sm:px-6 lg:px-8">
-      <Logo />
-      <nav aria-label="Main" className="ml-4 hidden gap-6 text-[15px] text-muted md:flex">
-        <a href="#how-it-works" className="hover:text-ink">
-          How it works
-        </a>
-        <a href="#under-the-hood" className="hover:text-ink">
-          Under the hood
-        </a>
-      </nav>
-      <div className="ml-auto flex items-center gap-2">
-        {user ? (
-          <ButtonLink href="/dashboard" size="sm">
-            Open radius →
-          </ButtonLink>
-        ) : (
-          <>
-            <Link href="/login" className="rounded-btn px-3 py-1.5 text-[15px] font-medium hover:bg-sunken">
-              Sign in
-            </Link>
-            <ButtonLink href="/login?next=/projects/new" size="sm">
-              Start building →
+    <header className="sticky top-0 z-40 border-b-[2.5px] border-ink bg-canvas/95 backdrop-blur-sm">
+      <div className="mx-auto flex h-[68px] max-w-[1200px] items-center gap-6 px-4 sm:px-6 lg:px-8">
+        <Logo />
+        <nav aria-label="Main" className="ml-4 hidden gap-1 font-mono text-[13px] font-bold uppercase md:flex">
+          {[
+            ["#how-it-works", "How it works"],
+            ["#matching", "Matching"],
+            ["#under-the-hood", "Under the hood"],
+          ].map(([href, label]) => (
+            <a key={href} href={href} className="rounded-btn px-3 py-1.5 hover:bg-mustard">
+              {label}
+            </a>
+          ))}
+        </nav>
+        <div className="ml-auto flex items-center gap-3">
+          {user ? (
+            <ButtonLink href="/dashboard" size="sm">
+              Open radius →
             </ButtonLink>
-          </>
-        )}
+          ) : (
+            <>
+              <Link href="/login" className="hidden rounded-btn px-3 py-1.5 text-[15px] font-semibold hover:bg-mustard sm:block">
+                Sign in
+              </Link>
+              <ButtonLink href="/login?next=/projects/new" size="sm" variant="pop">
+                Start building →
+              </ButtonLink>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );

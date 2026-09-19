@@ -28,8 +28,8 @@ export function Modal({ open, onClose, title, placement = "center", children, fo
 
   const layout =
     placement === "side"
-      ? "ml-auto mr-0 h-dvh max-h-dvh w-full max-w-[480px] rounded-none border-l animate-[fade_240ms_ease-out]"
-      : "m-auto w-[calc(100%-32px)] max-w-[520px] rounded-panel border animate-rise";
+      ? "ml-auto mr-0 h-dvh max-h-dvh w-full max-w-[500px] rounded-none border-l-[2.5px] animate-[fade_240ms_ease-out]"
+      : "m-auto w-[calc(100%-32px)] max-w-[540px] rounded-panel border-[2.5px] shadow-brutal-lg animate-rise";
 
   return (
     <dialog
@@ -43,22 +43,22 @@ export function Modal({ open, onClose, title, placement = "center", children, fo
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
-      className={`${layout} border-line bg-surface p-0 text-ink shadow-lift backdrop:bg-ink/25 backdrop:backdrop-blur-[1px]`}
+      className={`${layout} border-ink bg-surface p-0 text-ink backdrop:bg-ink/40`}
     >
       {open && (
         <div className="flex h-full max-h-[inherit] flex-col">
-          <header className="flex items-start justify-between gap-4 px-6 pt-6">
-            <h2 id="modal-title" className="text-xl font-bold">
+          <header className="flex items-center justify-between gap-4 border-b-[2.5px] border-ink bg-mustard px-6 py-4">
+            <h2 id="modal-title" className="text-xl font-extrabold">
               {title}
             </h2>
-            <button type="button" onClick={onClose} className="-mr-2 -mt-1 rounded-btn p-2 text-muted hover:bg-sunken hover:text-ink" aria-label="Close">
+            <button type="button" onClick={onClose} className="-mr-2 rounded-btn border-2 border-ink bg-surface p-1.5 text-ink shadow-brutal-sm hover:bg-canvas active:shadow-none" aria-label="Close">
               <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-                <path d="m4 4 8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                <path d="m4 4 8 8M12 4l-8 8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
               </svg>
             </button>
           </header>
           <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
-          {footer && <footer className="flex items-center justify-end gap-2 border-t border-line px-6 py-4">{footer}</footer>}
+          {footer && <footer className="flex items-center justify-end gap-3 border-t-[2.5px] border-ink bg-canvas px-6 py-4">{footer}</footer>}
         </div>
       )}
     </dialog>

@@ -16,7 +16,7 @@ function Section({ id, title, projects, userId, empty }: { id: string; title: st
         {title}
       </h2>
       {projects.length ? (
-        <ul className="divide-y divide-line">
+        <ul className="mt-5 space-y-5">
           {projects.map((p) => (
             <ProjectRow key={p.projectId} project={p} isOwner={p.ownerId === userId} />
           ))}

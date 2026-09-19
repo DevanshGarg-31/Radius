@@ -41,22 +41,19 @@ export function AnalysisSteps({ analysis, onRevealed, heading = "Understanding y
   }, [revealed, onRevealed, reduced]);
 
   return (
-    <section aria-live="polite" className="animate-rise">
-      <h2 className="text-2xl font-bold">{heading}</h2>
+    <section aria-live="polite" className="animate-rise rounded-panel border-[2.5px] border-ink bg-surface p-6 shadow-brutal-lg sm:p-8">
+      <h2 className="text-3xl font-extrabold">{heading}</h2>
       <ol className="mt-6 space-y-4">
         {STEPS.map((step, i) => {
           const done = analysis && revealed > i;
           const active = !done && (analysis ? revealed === i : i === 0);
           return (
-            <li key={step.label} className="grid grid-cols-[24px_1fr] gap-3">
-              <span className="mt-0.5 flex size-5 items-center justify-center" aria-hidden="true">
+            <li key={step.label} className="grid grid-cols-[28px_1fr] gap-3">
+              <span className="flex size-6 items-center justify-center" aria-hidden="true">
                 {done ? (
-                  <svg width="18" height="18" viewBox="0 0 18 18" className="animate-pop text-success">
-                    <circle cx="9" cy="9" r="8.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
-                    <path d="m5.5 9.2 2.4 2.4 4.6-4.9" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <span className="flex size-6 animate-pop items-center justify-center rounded-full border-2 border-ink bg-mint text-xs font-bold">✓</span>
                 ) : (
-                  <span className={`size-2 rounded-full ${active ? "dot-pending bg-ink" : "bg-line-strong"}`} />
+                  <span className={`size-3.5 rounded-full border-2 border-ink ${active ? "dot-pending bg-mustard" : "bg-surface"}`} />
                 )}
               </span>
               <div>
