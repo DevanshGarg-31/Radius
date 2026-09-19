@@ -2,19 +2,20 @@ import Link from "next/link";
 import { Progress } from "@/components/ui/Progress";
 import type { Project } from "@/services/api";
 
-/** The single most useful next step for a project. */
-export function nextStep(project: Project, isOwner: boolean): { label: string; href: string } {
+/** The single most useful next step for a project, depending on how you relate to it. */
+export function nextStep(project: Project, isOwner: boolean, isMember = isOwner): { label: string; href: string } {
   const base = `/projects/${project.projectId}`;
   if (!project.requiredSkills.length) return { label: isOwner ? "Understand what it needs" : "View project", href: base };
-  if (project.status === "full") return { label: "View the team", href: `${base}/team` };
+  if (!isMember) return { label: "View the team", href: `${base}/team` };
   const open = project.teamSize - project.currentTeamSize;
-  if (!isOwner) return { label: "View the team", href: `${base}/team` };
-  return { label: open === 1 ? "Find one more person" : `Find ${open} more people`, href: `${base}/people` };
+  if (isOwner && project.status === "open" && open > 0) return { label: open === 1 ? "Find one more person" : `Find ${open} more people`, href: `${base}/people` };
+  if (project.currentTeamSize >= 2) return { label: "Open the team room", href: `${base}/room` };
+  return { label: "View the team", href: `${base}/team` };
 }
 
 /** A project as an editorial row: title, one line, team progress, next step. */
-export function ProjectRow({ project, isOwner }: { project: Project; isOwner: boolean }) {
-  const step = nextStep(project, isOwner);
+export function ProjectRow({ project, isOwner, isMember = isOwner }: { project: Project; isOwner: boolean; isMember?: boolean }) {
+  const step = nextStep(project, isOwner, isMember);
   return (
     <li className="grid gap-4 rounded-panel border-[2.5px] border-ink bg-surface p-5 shadow-brutal sm:grid-cols-[1fr_220px] sm:items-center">
       <div className="min-w-0">

@@ -48,6 +48,11 @@ function TeamInner() {
             <p className="mt-2 text-[15px] text-muted">
               {size} of {p.teamSize} collaborators
             </p>
+            {size > 1 && (
+              <ButtonLink href={`/projects/${p.projectId}/room`} variant="pop" className="mt-5">
+                Open the team room →
+              </ButtonLink>
+            )}
             <div className="mt-6">
               {team.status === "loading" && <LoadingState message="Gathering the team…" />}
               {team.status === "error" && <ErrorState title="We couldn't load the team." error={team.error} onRetry={team.reload} />}

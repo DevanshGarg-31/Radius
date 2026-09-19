@@ -5,7 +5,7 @@ import type { TeamResponse } from "@/services/api";
 
 type Member = TeamResponse["members"][number];
 
-export function TeamMemberList({ members, highlight }: { members: Member[]; highlight?: string }) {
+export function TeamMemberList({ members, highlight, showSkills = true }: { members: Member[]; highlight?: string; showSkills?: boolean }) {
   return (
     <ul className="space-y-3">
       {members.map((m, i) => (
@@ -19,7 +19,7 @@ export function TeamMemberList({ members, highlight }: { members: Member[]; high
             </p>
             <p className="text-[15px] text-muted">{m.role}</p>
           </div>
-          <SkillList items={m.skills} limit={3} className="hidden max-w-[50%] justify-end sm:flex" />
+          {showSkills && <SkillList items={m.skills} limit={3} className="hidden max-w-[50%] justify-end sm:flex" />}
         </li>
       ))}
     </ul>

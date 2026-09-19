@@ -42,7 +42,12 @@ function TeamFormed({ joined, me }: { joined: Joined; me: { userId: string; name
           ))}
         </ul>
         <div className="mt-8 flex flex-wrap gap-3">
-          <ButtonLink href={`/projects/${projectId}/team?joined=${me.userId}`}>See the team →</ButtonLink>
+          <ButtonLink href={`/projects/${projectId}/room`} variant="pop">
+            Open the team room →
+          </ButtonLink>
+          <ButtonLink href={`/projects/${projectId}/team?joined=${me.userId}`} variant="secondary">
+            See the team
+          </ButtonLink>
           {founder && (
             <Button
               variant="secondary"

@@ -5,6 +5,9 @@
 
 export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000").replace(/\/$/, "");
 
+/** Team-room WebSocket (API Gateway WebSocket API, or ws://localhost:4000/ws locally). Empty = poll instead. */
+export const WS_URL = (process.env.NEXT_PUBLIC_WS_URL ?? "").replace(/\/$/, "");
+
 export type ExperienceLevel = "beginner" | "intermediate" | "advanced";
 export type AiSource = "bedrock" | "fallback" | "seed";
 export type RequestStatus = "pending" | "accepted" | "rejected";
@@ -127,6 +130,39 @@ export type Invitation = CollaborationRequest & {
   fromUser?: UserSummary;
 };
 
+export interface ChatMessage {
+  projectId: string;
+  sortKey: string;
+  messageId: string;
+  userId: string;
+  text: string;
+  sentAt: string;
+}
+
+export interface RoomCall {
+  meetingId: string;
+  startedBy: string;
+  startedAt: string;
+}
+
+export interface RoomResponse {
+  project: Pick<Project, "projectId" | "title" | "description" | "category">;
+  members: Array<UserSummary & { role: string }>;
+  messages: ChatMessage[];
+  call: RoomCall | null;
+  realtime: boolean;
+}
+
+/** Chime meeting and attendee objects, passed straight to the Chime SDK. */
+export interface CallJoin {
+  meeting: { MeetingId: string } & Record<string, unknown>;
+  attendee: { AttendeeId: string; ExternalUserId: string } & Record<string, unknown>;
+  started: boolean;
+}
+
+/** Pushed over the WebSocket to everyone in a team room. */
+export type RoomEvent = { type: "message"; message: ChatMessage } | { type: "call"; status: "started"; startedBy: string; startedAt: string };
+
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -184,4 +220,10 @@ export const api = {
   presignUpload: (userId: string, kind: "avatar" | "project", contentType: string) =>
     request<{ uploadUrl: string; key: string; assetPath: string; headers: Record<string, string> }>("POST", "/uploads/presign", { userId, body: { kind, contentType } }),
   assetUrl: (assetPath: string) => `${API_BASE_URL}${assetPath}`,
+
+  getRoom: (userId: string, projectId: string) => request<RoomResponse>("GET", `/projects/${projectId}/room`, { userId }),
+  messagesAfter: (userId: string, projectId: string, after?: string) =>
+    request<{ messages: ChatMessage[] }>("GET", `/projects/${projectId}/messages${after ? `?after=${encodeURIComponent(after)}` : ""}`, { userId }),
+  sendMessage: (userId: string, projectId: string, text: string) => request<{ message: ChatMessage }>("POST", `/projects/${projectId}/messages`, { userId, body: { text } }),
+  joinCall: (userId: string, projectId: string) => request<CallJoin>("POST", `/projects/${projectId}/call`, { userId }),
 };
