@@ -3,7 +3,7 @@ import type { Project } from "../models/project.js";
 import { CreateTeamInput, type Team } from "../models/team.js";
 import { toSummary } from "../models/user.js";
 import { analyzeTeamGap } from "../services/bedrock.js";
-import * as db from "../services/dynamodb.js";
+import { db } from "../services/store.js";
 import { buildMatchContext, missingSkills } from "../services/matching.js";
 import { assertOwner, requireCaller, requireProject } from "../utils/auth.js";
 import { conflict, json, parseBody } from "../utils/http.js";

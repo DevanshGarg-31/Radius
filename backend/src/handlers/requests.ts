@@ -1,7 +1,7 @@
 import type { Handler } from "../router.js";
 import { CreateRequestInput, UpdateRequestInput, type CollaborationRequest } from "../models/request.js";
 import { toSummary } from "../models/user.js";
-import * as db from "../services/dynamodb.js";
+import { db } from "../services/store.js";
 import { buildMatchContext, missingSkills } from "../services/matching.js";
 import { assertOwner, requireCaller, requireProject } from "../utils/auth.js";
 import { badRequest, conflict, forbidden, json, notFound, parseBody } from "../utils/http.js";

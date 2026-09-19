@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "tsx watch scripts/local-server.ts",
+    "dev:memory": "tsx watch scripts/local-server.ts --memory",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "build": "node scripts/build.mjs",

@@ -4,7 +4,7 @@ import { CreateProjectInput, type Project } from "../models/project.js";
 import type { Team } from "../models/team.js";
 import { toSummary } from "../models/user.js";
 import { analyzeProject as runAnalysis } from "../services/bedrock.js";
-import * as db from "../services/dynamodb.js";
+import { db } from "../services/store.js";
 import { indexProject } from "../services/opensearch.js";
 import { assertOwner, requireCaller, requireProject } from "../utils/auth.js";
 import { json, parseBody } from "../utils/http.js";

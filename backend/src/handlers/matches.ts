@@ -4,7 +4,7 @@ import type { CachedExplanation, Project } from "../models/project.js";
 import type { CollaborationRequest } from "../models/request.js";
 import { toSummary, type User } from "../models/user.js";
 import { explainMatches } from "../services/bedrock.js";
-import * as db from "../services/dynamodb.js";
+import { db } from "../services/store.js";
 import { buildMatchContext, missingSkills, rankCandidates, targetSkills, WEIGHTS, type MatchContext } from "../services/matching.js";
 import { isSearchEnabled, searchCandidates } from "../services/opensearch.js";
 import { requireCaller, requireProject } from "../utils/auth.js";

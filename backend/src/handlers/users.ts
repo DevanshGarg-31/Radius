@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { Handler } from "../router.js";
 import { UserProfileInput, UserUpdateInput, toSummary, type User } from "../models/user.js";
-import * as db from "../services/dynamodb.js";
+import { db } from "../services/store.js";
 import { indexUser } from "../services/opensearch.js";
 import { requireCaller } from "../utils/auth.js";
 import { conflict, forbidden, json, notFound, parseBody } from "../utils/http.js";

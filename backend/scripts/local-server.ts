@@ -2,12 +2,28 @@
  * Runs the Lambda handler as a local HTTP server for frontend development.
  * Uses your local AWS credentials and backend/.env.
  *
- *   npm run dev   ->  http://localhost:4000
+ *   npm run dev          ->  http://localhost:4000 (real AWS services)
+ *   npm run dev:memory   ->  same API with no AWS at all: in-memory data seeded with
+ *                            the demo users/projects, Bedrock and OpenSearch fallbacks
  */
 import "dotenv/config";
 import { createServer } from "node:http";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
-import { handler } from "../src/index.js";
+
+const memory = process.argv.includes("--memory");
+if (memory) {
+  process.env.DATA_STORE = "memory";
+  process.env.BEDROCK_ENABLED = "false";
+  process.env.OPENSEARCH_ENDPOINT = "";
+}
+
+// Imported after the env is set, because config is read at import time.
+const { handler } = await import("../src/index.js");
+if (memory) {
+  const { resetMemoryStore } = await import("../src/services/memory-store.js");
+  const { DEMO_PROJECTS, DEMO_TEAMS, DEMO_USERS } = await import("./seed-data.js");
+  resetMemoryStore({ users: DEMO_USERS, projects: DEMO_PROJECTS, teams: DEMO_TEAMS });
+}
 
 const port = Number(process.env.PORT ?? 4000);
 
@@ -32,4 +48,4 @@ createServer(async (req, res) => {
   const result = await handler(event);
   res.writeHead(result.statusCode ?? 200, result.headers as Record<string, string>);
   res.end(result.body ?? "");
-}).listen(port, () => console.log(`Radius API running at http://localhost:${port}`));
+}).listen(port, () => console.log(`Radius API running at http://localhost:${port}${memory ? " (in-memory demo data, no AWS)" : ""}`));

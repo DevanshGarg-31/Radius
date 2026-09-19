@@ -19,6 +19,8 @@ export const config = {
     enabled: env("BEDROCK_ENABLED", "true") !== "false",
   },
   corsOrigin: env("CORS_ORIGIN", "*"),
+  /** "memory" keeps all data in-process (local development and tests only). */
+  dataStore: env("DATA_STORE", "dynamodb"),
   matching: {
     candidatePoolSize: 20,
     topN: 5,
