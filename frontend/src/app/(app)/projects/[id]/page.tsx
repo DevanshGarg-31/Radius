@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { RolesSection } from "@/components/ideas/RolesSection";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { AnalysisSteps } from "@/components/projects/AnalysisSteps";
 import { ProjectHeader } from "@/components/projects/ProjectHeader";
@@ -90,6 +91,10 @@ export default function ProjectPage() {
           <AnalyzeNow projectId={p.projectId} onDone={project.reload} />
         ) : (
           <p className="text-[17px] text-muted">The founder hasn&apos;t worked out what this project needs yet.</p>
+        )}
+
+        {analyzed && (
+          <RolesSection projectId={p.projectId} openings={p.openings ?? []} suggested={project.data.suggestedOpenings ?? []} isOwner={isOwner} skills={p.requiredSkills} onSaved={project.reload} />
         )}
 
         <section aria-labelledby="team" className="mt-16 grid gap-8 border-t-[2.5px] border-ink pt-10 md:grid-cols-[1fr_1.4fr]">

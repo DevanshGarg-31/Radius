@@ -40,6 +40,8 @@ export interface Project {
   category: string;
   requiredSkills: string[];
   requiredRoles: string[];
+  /** The roles it's looking for. Absent on projects saved before the idea board. */
+  openings?: Opening[];
   teamSize: number;
   currentTeamSize: number;
   location: string;
@@ -287,7 +289,7 @@ export const api = {
     const qs = new URLSearchParams(Object.entries(filter).filter(([, v]) => v) as [string, string][]).toString();
     return request<{ projects: Project[] }>("GET", `/projects${qs ? `?${qs}` : ""}`);
   },
-  getProject: (projectId: string) => request<{ project: Project; owner?: UserSummary }>("GET", `/projects/${projectId}`),
+  getProject: (projectId: string) => request<{ project: Project; owner?: UserSummary; suggestedOpenings: Opening[] }>("GET", `/projects/${projectId}`),
   listIdeas: (filter: { q?: string; role?: string; skill?: string; category?: string; remote?: boolean } = {}) => {
     const qs = new URLSearchParams(Object.entries(filter).filter(([, v]) => v).map(([k, v]) => [k, String(v)])).toString();
     return request<{ ideas: Idea[]; roles: string[]; categories: string[] }>("GET", `/ideas${qs ? `?${qs}` : ""}`);

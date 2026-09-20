@@ -82,7 +82,12 @@ export const getProject: Handler = async (req) => {
   await requireAccount(req);
   const project = await requireProject(req.params.projectId);
   const owner = await db.getUser(project.ownerId);
-  return json(200, { project: publicProject(project), owner: owner ? toSummary(owner) : undefined });
+  return json(200, {
+    project: publicProject(project),
+    owner: owner ? toSummary(owner) : undefined,
+    // A starting point for an idea that hasn't said which roles it wants yet.
+    suggestedOpenings: project.openings?.length ? [] : suggestOpenings(project.aiRequirements?.roles ?? project.requiredRoles, project.requiredSkills),
+  });
 };
 
 /** POST /projects/{projectId}/analyze - Bedrock extracts skills, roles and topics. */
@@ -93,18 +98,11 @@ export const analyzeProject: Handler = async (req) => {
 
   const { analysis, source } = await runAnalysis(project);
   const aiRequirements = { ...analysis, source, modelId: source === "bedrock" ? config.bedrock.modelId : undefined, analyzedAt: nowIso() };
-  // An idea with no roles yet gets a suggested set, which the founder edits before publishing.
+  // Suggested roles are offered, not saved: an idea reaches the board only when
+  // its founder publishes the roles they actually want.
   const openings = project.openings?.length ? project.openings : suggestOpenings(analysis.roles, analysis.skills);
-  const updated: Project = {
-    ...project,
-    category: analysis.category,
-    requiredSkills: analysis.skills,
-    requiredRoles: analysis.roles,
-    openings,
-    aiRequirements,
-  };
+  const updated: Project = { ...project, category: analysis.category, requiredSkills: analysis.skills, requiredRoles: analysis.roles, aiRequirements };
   await db.saveProjectAnalysis(project.projectId, updated);
-  if (!project.openings?.length && openings.length) await db.saveOpenings(project.projectId, openings);
   await reindex(updated);
 
   return json(200, {

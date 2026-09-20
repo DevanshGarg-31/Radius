@@ -113,6 +113,27 @@ describe("idea board", () => {
     expect((await call("PUT", `/projects/${projectId}/openings`, { as: "u002", body: { openings: [] } })).status).toBe(403);
   });
 
+  it("suggests roles after analysis without putting the idea on the board", async () => {
+    const created = await call("POST", "/projects", {
+      as: "u001",
+      body: { title: "Stadium Companion", description: "A live companion app for football fans at the stadium, with stats and replays.", teamSize: 4 },
+    });
+    const projectId = created.body.projectId as string;
+
+    const analysed = await call("POST", `/projects/${projectId}/analyze`, { as: "u001" });
+    expect(analysed.body.openings.length).toBeGreaterThan(0);
+    // Suggestions only: nothing is published until the founder says so.
+    expect((await call("GET", `/ideas/${projectId}`)).status).toBe(404);
+
+    const page = await call("GET", `/projects/${projectId}`, { as: "u001" });
+    expect(page.body.project.openings).toEqual([]);
+    expect(page.body.suggestedOpenings.length).toBeGreaterThan(0);
+
+    await call("PUT", `/projects/${projectId}/openings`, { as: "u001", body: { openings: [{ role: "Mobile Developer", count: 1, skills: ["Flutter"] }] } });
+    expect((await call("GET", `/ideas/${projectId}`)).status).toBe(200);
+    expect((await call("GET", `/projects/${projectId}`, { as: "u001" })).body.suggestedOpenings).toEqual([]);
+  });
+
   it("lets someone apply for a role, and the founder decide", async () => {
     const idea = (await call("GET", "/ideas/p001")).body.idea;
     const opening = idea.openings.find((o: { taken: number; count: number }) => o.taken < o.count);
