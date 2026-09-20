@@ -105,15 +105,22 @@ export async function getUsers(userIds: readonly string[]): Promise<User[]> {
 
 // ---------- Projects ----------
 
-export const getProject = (projectId: string) => getItem<Project>(T.projects, { projectId });
+/**
+ * Projects saved before ideas listed their roles have no `openings` field, so
+ * every read fills it in and the rest of the code can rely on it.
+ */
+const withOpenings = <T extends Project | undefined>(project: T): T => (project ? ({ ...project, openings: project.openings ?? [] } as T) : project);
+
+export const getProject = async (projectId: string) => withOpenings(await getItem<Project>(T.projects, { projectId }));
 
 export async function putProject(project: Project): Promise<void> {
   await doc.send(new PutCommand({ TableName: T.projects, Item: project }));
 }
 
-export const listProjects = () => scanAll<Project>({ TableName: T.projects });
+export const listProjects = async () => (await scanAll<Project>({ TableName: T.projects })).map((p) => withOpenings(p));
 
-export const listProjectsByOwner = (ownerId: string) => queryIndex<Project>(T.projects, INDEXES.projectsByOwner, "ownerId", ownerId);
+export const listProjectsByOwner = async (ownerId: string) =>
+  (await queryIndex<Project>(T.projects, INDEXES.projectsByOwner, "ownerId", ownerId)).map((p) => withOpenings(p));
 
 /** Creates the project and its team (owner as Founder) atomically. */
 export async function createProjectWithTeam(project: Project, team: Team): Promise<void> {

@@ -94,7 +94,7 @@ export const analyzeProject: Handler = async (req) => {
   const { analysis, source } = await runAnalysis(project);
   const aiRequirements = { ...analysis, source, modelId: source === "bedrock" ? config.bedrock.modelId : undefined, analyzedAt: nowIso() };
   // An idea with no roles yet gets a suggested set, which the founder edits before publishing.
-  const openings = project.openings.length ? project.openings : suggestOpenings(analysis.roles, analysis.skills);
+  const openings = project.openings?.length ? project.openings : suggestOpenings(analysis.roles, analysis.skills);
   const updated: Project = {
     ...project,
     category: analysis.category,
@@ -104,7 +104,7 @@ export const analyzeProject: Handler = async (req) => {
     aiRequirements,
   };
   await db.saveProjectAnalysis(project.projectId, updated);
-  if (!project.openings.length && openings.length) await db.saveOpenings(project.projectId, openings);
+  if (!project.openings?.length && openings.length) await db.saveOpenings(project.projectId, openings);
   await reindex(updated);
 
   return json(200, {

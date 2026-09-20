@@ -32,14 +32,15 @@ const card = (project: Project, owner?: User) => ({
   remote: project.remote,
   createdAt: project.createdAt,
   spotsLeft: spotsLeft(project),
-  openings: project.openings.map(publicOpening),
+  openings: (project.openings ?? []).map(publicOpening),
   owner: owner ? { userId: owner.userId, name: owner.name, username: owner.username, avatarUrl: owner.avatarUrl } : undefined,
 });
 
-const published = (project: Project): boolean => project.status === "open" && project.openings.length > 0;
+/** An idea joins the board once it says which roles it wants. */
+const published = (project: Project): boolean => project.status === "open" && (project.openings?.length ?? 0) > 0;
 
 const matchesText = (project: Project, q: string): boolean =>
-  [project.title, project.description, project.category, ...project.requiredSkills, ...project.openings.map((o) => o.role)].join(" ").toLowerCase().includes(q);
+  [project.title, project.description, project.category, ...project.requiredSkills, ...(project.openings ?? []).map((o) => o.role)].join(" ").toLowerCase().includes(q);
 
 /** GET /ideas?q=&role=&skill=&category=&remote=true - published ideas, newest first. */
 export const listIdeas: Handler = async (req) => {
