@@ -9,7 +9,7 @@ import { Button, ButtonLink } from "@/components/ui/Button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
 import { useAsync } from "@/hooks/useAsync";
 import { humanError } from "@/lib/errors";
-import { capitalise } from "@/lib/format";
+
 import { useCurrentUser } from "@/lib/session";
 import { api, type Invitation, type TeamResponse } from "@/services/api";
 
@@ -117,12 +117,15 @@ export default function InvitationsPage() {
     );
   }
 
-  const pending = invitations.status === "success" ? invitations.data.filter((i) => i.status === "pending") : [];
-  const past = invitations.status === "success" ? invitations.data.filter((i) => i.status !== "pending") : [];
+  const all = invitations.status === "success" ? invitations.data : [];
+  // Invitations are answered here; applications are waiting on the founder.
+  const pending = all.filter((i) => i.status === "pending" && i.initiatedBy !== "applicant");
+  const waiting = all.filter((i) => i.status === "pending" && i.initiatedBy === "applicant");
+  const past = all.filter((i) => i.status !== "pending");
 
   return (
     <PageContainer narrow>
-      <PageHeader title="Invitations" lede="People who'd like to build something with you." />
+      <PageHeader title="Invitations" lede="People who'd like to build something with you, and the ideas you've asked to join." />
       {invitations.status === "loading" && <LoadingState message="Checking your invitations…" />}
       {invitations.status === "error" && <ErrorState title="We couldn't load your invitations." error={invitations.error} onRetry={invitations.reload} />}
       {invitations.status === "success" && (
@@ -141,7 +144,33 @@ export default function InvitationsPage() {
               ))}
             </ul>
           ) : (
-            <EmptyState title="No new invitations." body="When a founder invites you to their project, it will appear here." action={<ButtonLink href="/discover" variant="secondary">See who&apos;s building what</ButtonLink>} />
+            <EmptyState
+              title="No new invitations."
+              body="When a founder invites you to their idea, it will appear here. You can also find ideas looking for someone like you."
+              action={
+                <ButtonLink href="/ideas" variant="pop">
+                  Browse the idea board →
+                </ButtonLink>
+              }
+            />
+          )}
+
+          {waiting.length > 0 && (
+            <section aria-labelledby="waiting" className="mt-16">
+              <h2 id="waiting" className="eyebrow mb-3">
+                You applied
+              </h2>
+              <ul className="divide-y divide-line rounded-card border-2 border-ink bg-surface px-4">
+                {waiting.map((application) => (
+                  <li key={application.requestId} className="flex flex-wrap items-center justify-between gap-2 py-3 text-[15px]">
+                    <span>
+                      {application.project?.title ?? "An idea"} <span className="text-muted">· {application.role}</span>
+                    </span>
+                    <span className="font-mono text-[11px] font-bold uppercase text-muted">Waiting to hear back</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
           )}
           {past.length > 0 && (
             <section aria-labelledby="past" className="mt-16">
@@ -154,7 +183,9 @@ export default function InvitationsPage() {
                     <span>
                       {inv.project?.title ?? "A project"} <span className="text-muted">· {inv.role}</span>
                     </span>
-                    <span className={inv.status === "accepted" ? "font-medium text-success-ink" : "text-muted"}>{inv.status === "rejected" ? "Declined" : capitalise(inv.status)}</span>
+                    <span className={inv.status === "accepted" ? "font-medium text-success-ink" : "text-muted"}>
+                      {inv.status === "accepted" ? (inv.initiatedBy === "applicant" ? "Joined" : "Accepted") : inv.initiatedBy === "applicant" ? "Not this time" : "Declined"}
+                    </span>
                   </li>
                 ))}
               </ul>

@@ -48,9 +48,10 @@ export const listNotifications: Handler = async (req) => {
     }),
   );
 
-  // Invitations waiting for them.
-  const pending = invitations.filter((r) => r.status === "pending" && r.createdAt > since);
-  const invitedProjects = await loadProjects(pending.map((r) => r.projectId));
+  // Invitations waiting for them, and answers to applications they sent.
+  const pending = invitations.filter((r) => r.status === "pending" && r.initiatedBy === "owner" && r.createdAt > since);
+  const answeredApplications = invitations.filter((r) => r.status !== "pending" && r.initiatedBy === "applicant" && r.updatedAt > since);
+  const invitedProjects = await loadProjects([...pending, ...answeredApplications].map((r) => r.projectId));
   const inviteItems: Notification[] = pending.flatMap((r) => {
     const project = invitedProjects.get(r.projectId);
     return project
@@ -58,12 +59,24 @@ export const listNotifications: Handler = async (req) => {
       : [];
   });
 
-  // Answers to invitations they sent.
-  const answerLists = await Promise.all(
+  // On their own ideas: people applying, and answers to invitations they sent.
+  const ownProjectLists = await Promise.all(
     ownedProjects.map(async (project) => {
       const requests = await db.listRequestsByProject(project.projectId);
-      return requests
-        .filter((r) => r.status !== "pending" && r.updatedAt > since && r.fromUserId === caller.userId)
+      const applications = requests
+        .filter((r) => r.status === "pending" && r.initiatedBy === "applicant" && r.createdAt > since)
+        .map<Notification>((r) => ({
+          id: `app_${r.requestId}_${r.createdAt}`,
+          kind: "application",
+          at: r.createdAt,
+          projectId: project.projectId,
+          projectTitle: project.title,
+          actor: unknownActor(r.toUserId),
+          requestId: r.requestId,
+          role: r.role,
+        }));
+      const answers = requests
+        .filter((r) => r.status !== "pending" && r.updatedAt > since && r.initiatedBy === "owner" && r.fromUserId === caller.userId)
         .map<Notification>((r) => ({
           id: `ans_${r.requestId}_${r.status}`,
           kind: "invite-answer",
@@ -74,10 +87,27 @@ export const listNotifications: Handler = async (req) => {
           requestId: r.requestId,
           status: r.status as "accepted" | "rejected",
         }));
+      return [...applications, ...answers];
     }),
   );
 
-  const items = [...teamActivity.flat(), ...inviteItems, ...answerLists.flat()]
+  const applicationAnswers: Notification[] = answeredApplications.flatMap((r) => {
+    const project = invitedProjects.get(r.projectId);
+    return project
+      ? [{
+          id: `ans_${r.requestId}_${r.status}`,
+          kind: "invite-answer" as const,
+          at: r.updatedAt,
+          projectId: project.projectId,
+          projectTitle: project.title,
+          actor: unknownActor(project.ownerId),
+          requestId: r.requestId,
+          status: r.status as "accepted" | "rejected",
+        }]
+      : [];
+  });
+
+  const items = [...teamActivity.flat(), ...inviteItems, ...applicationAnswers, ...ownProjectLists.flat()]
     .sort((a, b) => b.at.localeCompare(a.at))
     .slice(0, MAX_ITEMS);
 

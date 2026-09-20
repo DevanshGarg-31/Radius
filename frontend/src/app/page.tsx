@@ -110,14 +110,14 @@ export default function LandingPage() {
                 </div>
                 <Reveal delay={0.6} distance={16}>
                   <p className="mt-8 max-w-md text-lg leading-relaxed text-ink-soft">
-                    Describe what you want to build. Find people who can help make it happen. Build the team you need.
+                    Publish what you want to build and the roles you need. People find it, apply, and the team comes together.
                   </p>
                   <div className="mt-9 flex flex-wrap gap-4">
                     <ButtonLink href="/signup?next=/projects/new" size="lg" variant="pop">
                       Start building →
                     </ButtonLink>
-                    <ButtonLink href="/signup?next=/discover" size="lg" variant="secondary">
-                      Explore people
+                    <ButtonLink href="/ideas" size="lg" variant="secondary">
+                      Browse ideas
                     </ButtonLink>
                   </div>
                   <div className="mt-10 flex items-center gap-3">

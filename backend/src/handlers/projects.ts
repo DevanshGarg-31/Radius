@@ -1,6 +1,6 @@
 import type { Handler } from "../router.js";
 import { config } from "../config.js";
-import { CreateProjectInput, type Project } from "../models/project.js";
+import { CreateProjectInput, SetOpeningsInput, type Project } from "../models/project.js";
 import type { Team } from "../models/team.js";
 import { toSummary } from "../models/user.js";
 import { analyzeProject as runAnalysis } from "../services/bedrock.js";
@@ -9,6 +9,7 @@ import { indexProject } from "../services/opensearch.js";
 import { assertOwner, requireAccount, requireCaller, requireProject } from "../utils/auth.js";
 import { json, parseBody } from "../utils/http.js";
 import { newId, nowIso, teamIdFor } from "../utils/ids.js";
+import { suggestOpenings, toOpenings } from "../utils/openings.js";
 import { errorFields, log } from "../utils/logger.js";
 
 async function reindex(project: Project): Promise<void> {
@@ -35,6 +36,7 @@ export const createProject: Handler = async (req) => {
     requiredSkills: [],
     preferredSkills: [],
     requiredRoles: [],
+    openings: toOpenings(input.openings),
     teamSize: input.teamSize,
     currentTeamSize: 1,
     location: input.location || owner.location,
@@ -91,14 +93,18 @@ export const analyzeProject: Handler = async (req) => {
 
   const { analysis, source } = await runAnalysis(project);
   const aiRequirements = { ...analysis, source, modelId: source === "bedrock" ? config.bedrock.modelId : undefined, analyzedAt: nowIso() };
+  // An idea with no roles yet gets a suggested set, which the founder edits before publishing.
+  const openings = project.openings.length ? project.openings : suggestOpenings(analysis.roles, analysis.skills);
   const updated: Project = {
     ...project,
     category: analysis.category,
     requiredSkills: analysis.skills,
     requiredRoles: analysis.roles,
+    openings,
     aiRequirements,
   };
   await db.saveProjectAnalysis(project.projectId, updated);
+  if (!project.openings.length && openings.length) await db.saveOpenings(project.projectId, openings);
   await reindex(updated);
 
   return json(200, {
@@ -106,8 +112,20 @@ export const analyzeProject: Handler = async (req) => {
     category: analysis.category,
     skills: analysis.skills,
     roles: analysis.roles,
+    openings,
     requirements: analysis.requirements,
     topics: analysis.topics,
     source,
   });
+};
+
+/** PUT /projects/{projectId}/openings - the founder sets the roles they're looking for. */
+export const setOpenings: Handler = async (req) => {
+  const caller = await requireCaller(req);
+  const project = await requireProject(req.params.projectId);
+  assertOwner(project, caller);
+  const { openings } = parseBody(req.event, SetOpeningsInput);
+  const saved = toOpenings(openings, project.openings);
+  await db.saveOpenings(project.projectId, saved);
+  return json(200, { openings: saved });
 };

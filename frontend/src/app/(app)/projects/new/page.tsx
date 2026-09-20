@@ -4,16 +4,24 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { OpeningsEditor, toDrafts, toPayload, type OpeningDraft } from "@/components/ideas/OpeningsEditor";
 import { AnalysisSteps } from "@/components/projects/AnalysisSteps";
 import { ProjectRequirements } from "@/components/projects/ProjectRequirements";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Field";
 import { ErrorState } from "@/components/ui/States";
 import { useCurrentUser } from "@/lib/session";
+import { humanError } from "@/lib/errors";
 import { api, type Analysis } from "@/services/api";
 import { DRAFT_KEY, EXAMPLE_IDEA } from "./draft";
 
-type Stage = { name: "write" } | { name: "analyzing"; projectId: string; analysis?: Analysis } | { name: "revealed"; projectId: string; analysis: Analysis } | { name: "failed"; projectId?: string; error: unknown };
+type Stage =
+  | { name: "write" }
+  | { name: "analyzing"; projectId: string; analysis?: Analysis }
+  | { name: "revealed"; projectId: string; analysis: Analysis }
+  | { name: "roles"; projectId: string; analysis: Analysis }
+  | { name: "published"; projectId: string }
+  | { name: "failed"; projectId?: string; error: unknown };
 
 /** An idea started on the dashboard. Read without side effects (React may call initializers twice); cleared once the project exists. */
 function readDraft(): string {
@@ -82,6 +90,9 @@ export default function NewProjectPage() {
   const [location, setLocation] = useState("");
   const [errors, setErrors] = useState<{ title?: string; description?: string }>({});
   const [stage, setStage] = useState<Stage>({ name: "write" });
+  const [drafts, setDrafts] = useState<OpeningDraft[]>([]);
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string>();
 
   async function analyze(projectId: string) {
     setStage({ name: "analyzing", projectId });
@@ -134,8 +145,85 @@ export default function NewProjectPage() {
           <ProjectRequirements title={title} skills={stage.analysis.skills} roles={stage.analysis.roles} requirements={stage.analysis.requirements} teamSize={teamSize} />
         </div>
         <div className="mt-12 flex flex-wrap items-center gap-4 border-t border-line pt-8">
-          <ButtonLink href={`/projects/${stage.projectId}/people`} size="lg">
-            Find collaborators →
+          <Button
+            size="lg"
+            variant="pop"
+            onClick={() => {
+              setDrafts(toDrafts(stage.analysis.openings ?? []));
+              setStage({ name: "roles", projectId: stage.projectId, analysis: stage.analysis });
+            }}
+          >
+            Next: who do you need? →
+          </Button>
+          <Link href={`/projects/${stage.projectId}`} className="text-[15px] font-medium text-muted underline underline-offset-4 hover:text-ink">
+            Open the project page
+          </Link>
+        </div>
+      </PageContainer>
+    );
+  }
+
+  if (stage.name === "roles") {
+    const ready = toPayload(drafts).length > 0;
+    return (
+      <PageContainer narrow className="pb-16 pt-14">
+        <p className="eyebrow mb-3">{title}</p>
+        <h1 className="text-[36px] font-extrabold leading-[1.05] sm:text-[44px]">Who do you need?</h1>
+        <p className="mt-4 max-w-xl text-[17px] text-muted">
+          These roles came from your description. Change anything, say how many of each you want, and they become what people apply for on the idea board.
+        </p>
+
+        <div className="mt-10">
+          <OpeningsEditor drafts={drafts} onChange={setDrafts} suggestions={stage.analysis.skills} />
+        </div>
+
+        {publishError && (
+          <p role="alert" className="mt-6 text-sm text-danger">
+            {publishError}
+          </p>
+        )}
+
+        <div className="mt-10 flex flex-wrap items-center gap-4 border-t border-line pt-8">
+          <Button
+            size="lg"
+            variant="pop"
+            busy={publishing}
+            disabled={!ready}
+            onClick={async () => {
+              setPublishing(true);
+              setPublishError(undefined);
+              try {
+                await api.setOpenings(stage.projectId, toPayload(drafts));
+                setStage({ name: "published", projectId: stage.projectId });
+              } catch (err) {
+                setPublishError(humanError(err, "We couldn't publish your idea. Try again."));
+              } finally {
+                setPublishing(false);
+              }
+            }}
+          >
+            Publish the idea →
+          </Button>
+          <p className="text-sm text-muted">{ready ? "It goes on the board, where anyone can find it." : "Add at least one role to publish."}</p>
+        </div>
+      </PageContainer>
+    );
+  }
+
+  if (stage.name === "published") {
+    return (
+      <PageContainer narrow className="pt-16">
+        <div className="animate-rise rounded-panel border-[2.5px] border-ink bg-mint p-8 shadow-brutal-lg">
+          <p className="eyebrow mb-3">Published</p>
+          <h1 className="text-[32px] font-extrabold leading-tight sm:text-[40px]">{title} is on the board.</h1>
+          <p className="mt-4 text-[17px]">People can find it, see the roles you need and apply. You&apos;ll hear about every application.</p>
+        </div>
+        <div className="mt-10 flex flex-wrap items-center gap-4">
+          <ButtonLink href={`/ideas/${stage.projectId}`} size="lg">
+            See how it looks →
+          </ButtonLink>
+          <ButtonLink href={`/projects/${stage.projectId}/people`} variant="secondary">
+            Find collaborators yourself
           </ButtonLink>
           <Link href={`/projects/${stage.projectId}`} className="text-[15px] font-medium text-muted underline underline-offset-4 hover:text-ink">
             Open the project page

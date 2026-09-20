@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, DM_Sans, Space_Mono } from "next/font/google";
+import { NotificationToasts } from "@/components/notifications/NotificationToasts";
+import { NotificationsProvider } from "@/lib/notifications";
 import { SessionProvider } from "@/lib/session";
 import "./globals.css";
 
@@ -19,7 +21,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${bricolage.variable} ${dmSans.variable} ${spaceMono.variable}`}>
       <body>
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <NotificationsProvider>
+            {children}
+            <NotificationToasts />
+          </NotificationsProvider>
+        </SessionProvider>
       </body>
     </html>
   );

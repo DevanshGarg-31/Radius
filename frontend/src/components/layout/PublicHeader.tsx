@@ -13,14 +13,22 @@ export function PublicHeader() {
         <Logo />
         <nav aria-label="Main" className="ml-4 hidden gap-1 font-mono text-[13px] font-bold uppercase md:flex">
           {[
+            ["/ideas", "Idea board"],
             ["#how-it-works", "How it works"],
             ["#matching", "Matching"],
             ["#under-the-hood", "Under the hood"],
-          ].map(([href, label]) => (
-            <a key={href} href={href} className="rounded-btn px-3 py-1.5 hover:bg-mustard">
-              {label}
-            </a>
-          ))}
+          ].map(([href, label]) =>
+            // Anchors jump within the landing page; real routes navigate.
+            href!.startsWith("/") ? (
+              <Link key={href} href={href!} className="rounded-btn px-3 py-1.5 hover:bg-mustard">
+                {label}
+              </Link>
+            ) : (
+              <a key={href} href={href} className="rounded-btn px-3 py-1.5 hover:bg-mustard">
+                {label}
+              </a>
+            ),
+          )}
         </nav>
         <div className="ml-auto flex items-center gap-3">
           {state.status === "needs-profile" ? (

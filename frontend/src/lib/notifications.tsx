@@ -208,6 +208,8 @@ export function notificationText(n: Notification): string {
       return "started a video call";
     case "invite":
       return `invited you to join as ${n.role}`;
+    case "application":
+      return `wants to join as ${n.role}`;
     case "invite-answer":
       return n.status === "accepted" ? "joined your team" : "passed on your invitation";
   }
@@ -221,6 +223,8 @@ export function notificationHref(n: Notification): string {
       return `/projects/${n.projectId}/room`;
     case "invite":
       return "/invitations";
+    case "application":
+      return `/projects/${n.projectId}/people`;
     case "invite-answer":
       return n.status === "accepted" ? `/projects/${n.projectId}/team` : `/projects/${n.projectId}/people`;
   }

@@ -13,7 +13,7 @@ import {
   type ScanCommandInput,
 } from "@aws-sdk/lib-dynamodb";
 import { config } from "../config.js";
-import type { CachedExplanation, Project } from "../models/project.js";
+import type { CachedExplanation, Opening, Project } from "../models/project.js";
 import type { CollaborationRequest } from "../models/request.js";
 import type { ChatMessage, RoomConnection } from "../models/room.js";
 import type { Team, TeamMeeting, TeamRole } from "../models/team.js";
@@ -162,6 +162,18 @@ export async function saveExplanationCache(projectId: string, cache: Record<stri
 
 // ---------- Teams ----------
 
+/** Replaces the roles an idea is looking for. */
+export async function saveOpenings(projectId: string, openings: Opening[]): Promise<void> {
+  await doc.send(
+    new UpdateCommand({
+      TableName: T.projects,
+      Key: { projectId },
+      UpdateExpression: "SET openings = :o, updatedAt = :u",
+      ExpressionAttributeValues: { ":o": openings, ":u": nowIso() },
+    }),
+  );
+}
+
 export const getTeam = (teamId: string) => getItem<Team>(T.teams, { teamId });
 
 export async function putTeam(team: Team): Promise<void> {
@@ -249,9 +261,11 @@ export async function rejectRequest(requestId: string, toUserId: string): Promis
  * member to the team and bumps the project's team size. Any concurrent change
  * (double accept, team already full) cancels the whole transaction.
  */
-export async function acceptRequest(request: CollaborationRequest, project: Project, teamId: string, role: TeamRole): Promise<void> {
+export async function acceptRequest(request: CollaborationRequest, project: Project, teamId: string, role: TeamRole, openingIndex?: number): Promise<void> {
   const now = nowIso();
   const newSize = project.currentTeamSize + 1;
+  // Joining a named role also takes one of its places.
+  const fillsOpening = openingIndex !== undefined && openingIndex >= 0;
   try {
     await doc.send(
       new TransactWriteCommand({
@@ -280,7 +294,7 @@ export async function acceptRequest(request: CollaborationRequest, project: Proj
             Update: {
               TableName: T.projects,
               Key: { projectId: project.projectId },
-              UpdateExpression: "SET currentTeamSize = :new, #s = :status, updatedAt = :u",
+              UpdateExpression: `SET currentTeamSize = :new, #s = :status, updatedAt = :u${fillsOpening ? `, openings[${openingIndex}].filledBy = list_append(openings[${openingIndex}].filledBy, :joined)` : ""}`,
               ConditionExpression: "currentTeamSize = :old AND currentTeamSize < teamSize",
               ExpressionAttributeNames: { "#s": "status" },
               ExpressionAttributeValues: {
@@ -288,6 +302,7 @@ export async function acceptRequest(request: CollaborationRequest, project: Proj
                 ":old": project.currentTeamSize,
                 ":status": newSize >= project.teamSize ? "full" : project.status,
                 ":u": now,
+                ...(fillsOpening ? { ":joined": [request.toUserId] } : {}),
               },
             },
           },
