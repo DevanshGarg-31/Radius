@@ -145,7 +145,7 @@ export const updateRequest: Handler = async (req) => {
       status: outcome,
     });
 
-  const openingIndex = request.openingId ? project.openings.findIndex((o) => o.openingId === request.openingId) : -1;
+  const openingIndex = request.openingId ? (project.openings ?? []).findIndex((o) => o.openingId === request.openingId) : -1;
 
   if (status === "rejected") {
     await db.rejectRequest(request.requestId, request.toUserId);

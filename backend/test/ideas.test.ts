@@ -46,6 +46,19 @@ describe("idea board", () => {
     expect(res.body.categories.length).toBeGreaterThan(1);
   });
 
+  it("survives projects saved before ideas listed their roles", async () => {
+    // Old rows have no openings field at all; they simply aren't on the board.
+    const legacy = { ...DEMO_PROJECTS[0]!, projectId: "p_legacy", title: "Written Before Roles" } as Record<string, unknown>;
+    delete legacy.openings;
+    resetMemoryStore({ users: DEMO_USERS, projects: [...DEMO_PROJECTS, legacy as unknown as (typeof DEMO_PROJECTS)[number]], teams: DEMO_TEAMS });
+
+    const res = await call("GET", "/ideas");
+    expect(res.status).toBe(200);
+    expect(res.body.ideas.some((i: { title: string }) => i.title === "Written Before Roles")).toBe(false);
+    expect((await call("GET", "/ideas/p_legacy")).status).toBe(404);
+    expect((await call("GET", "/ideas?q=football")).status).toBe(200);
+  });
+
   it("filters by role, skill, category and words in the idea", async () => {
     const byRole = await call("GET", "/ideas?role=video%20editor");
     expect(byRole.body.ideas.map((i: { title: string }) => i.title)).toEqual(["Football Highlights Channel"]);

@@ -5,11 +5,11 @@ import { keyOf, roleSkillKeys } from "./skills.js";
 /** A role still looking for someone. */
 export const isOpen = (opening: Opening): boolean => opening.filledBy.length < opening.count;
 
-export const openOpenings = (project: Pick<Project, "openings">): Opening[] => project.openings.filter(isOpen);
+export const openOpenings = (project: Pick<Project, "openings">): Opening[] => (project.openings ?? []).filter(isOpen);
 
 /** How many people an idea is still looking for, across all its roles. */
 export const spotsLeft = (project: Pick<Project, "openings">): number =>
-  project.openings.reduce((total, o) => total + Math.max(0, o.count - o.filledBy.length), 0);
+  (project.openings ?? []).reduce((total, o) => total + Math.max(0, o.count - o.filledBy.length), 0);
 
 /**
  * Turns what the founder entered into stored roles. Editing keeps whoever has
@@ -48,4 +48,4 @@ export function suggestOpenings(roles: readonly string[], skills: readonly strin
 }
 
 export const findOpening = (project: Pick<Project, "openings">, openingId: string): Opening | undefined =>
-  project.openings.find((o) => o.openingId === openingId);
+  (project.openings ?? []).find((o) => o.openingId === openingId);
