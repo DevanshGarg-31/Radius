@@ -7,6 +7,7 @@ import { Logo } from "@/components/brand/Logo";
 import { ButtonLink } from "@/components/ui/Button";
 import { useCurrentUser } from "@/lib/session";
 import { api } from "@/services/api";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { AccountMenu } from "./AccountMenu";
 
 /** Dispatched after accepting or declining, so the count updates without a navigation. */
@@ -72,6 +73,7 @@ export function Navbar() {
               <span aria-hidden="true">+</span> Start a project
             </ButtonLink>
           </span>
+          <NotificationBell />
           <AccountMenu />
         </div>
       </nav>

@@ -3,6 +3,7 @@ import { getMatches } from "./handlers/matches.js";
 import { analyzeProject, createProject, getProject, listProjects } from "./handlers/projects.js";
 import { health } from "./handlers/health.js";
 import { createRequest, listProjectRequests, updateRequest } from "./handlers/requests.js";
+import { listNotifications } from "./handlers/notifications.js";
 import { getRoom, handleWebSocket, joinCall, listMessages, sendMessage } from "./handlers/room.js";
 import { createTeam, getTeam, getTeamGaps } from "./handlers/teams.js";
 import { getAsset, presign } from "./handlers/uploads.js";
@@ -34,6 +35,7 @@ export const router = new Router()
   .get("/projects/:projectId/messages", listMessages)
   .post("/projects/:projectId/messages", sendMessage)
   .post("/projects/:projectId/call", joinCall)
+  .get("/notifications", listNotifications)
   .post("/uploads/presign", presign)
   .get("/assets/*", getAsset);
 

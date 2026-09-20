@@ -7,7 +7,9 @@
  */
 import { ApiGatewayManagementApiClient, GoneException, PostToConnectionCommand } from "@aws-sdk/client-apigatewaymanagementapi";
 import { config } from "../config.js";
+import type { Notification } from "../models/notification.js";
 import type { RoomEvent } from "../models/room.js";
+import { userChannel } from "../utils/ids.js";
 import { errorFields, log } from "../utils/logger.js";
 import { db } from "./store.js";
 
@@ -38,10 +40,22 @@ export const isRealtimeEnabled = (): boolean => Boolean(sender);
 
 /** Best effort: a failed push never fails the request that caused it (clients also re-sync). */
 export async function broadcast(projectId: string, event: RoomEvent): Promise<void> {
+  await push(projectId, event);
+}
+
+/**
+ * Tells people about something in one of their projects, wherever they are in
+ * the app. Each person has their own channel, open for as long as a tab is.
+ */
+export async function notify(userIds: string[], notification: Notification): Promise<void> {
+  await Promise.all([...new Set(userIds)].map((userId) => push(userChannel(userId), { type: "notification", notification })));
+}
+
+async function push(channel: string, event: RoomEvent): Promise<void> {
   if (!sender) return;
   const send = sender;
   try {
-    const connections = await db.listConnectionsByProject(projectId);
+    const connections = await db.listConnectionsByProject(channel);
     const data = JSON.stringify(event);
     await Promise.all(
       connections.map(async ({ connectionId }) => {
@@ -53,6 +67,6 @@ export async function broadcast(projectId: string, event: RoomEvent): Promise<vo
       }),
     );
   } catch (err) {
-    log.warn("broadcast failed", { projectId, ...errorFields(err) });
+    log.warn("push failed", { channel, ...errorFields(err) });
   }
 }

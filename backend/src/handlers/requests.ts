@@ -1,6 +1,8 @@
 import type { Handler } from "../router.js";
 import { CreateRequestInput, UpdateRequestInput, type CollaborationRequest } from "../models/request.js";
+import type { Notification } from "../models/notification.js";
 import { toSummary } from "../models/user.js";
+import { notify } from "../services/realtime.js";
 import { db } from "../services/store.js";
 import { buildMatchContext, missingSkills } from "../services/matching.js";
 import { assertOwner, requireCaller, requireProject } from "../utils/auth.js";
@@ -38,6 +40,17 @@ export const createRequest: Handler = async (req) => {
     updatedAt: now,
   };
   await db.createRequest(request);
+  const invite: Notification = {
+    id: `inv_${request.requestId}_${now}`,
+    kind: "invite",
+    at: now,
+    projectId: project.projectId,
+    projectTitle: project.title,
+    actor: { userId: caller.userId, name: caller.name, avatarUrl: caller.avatarUrl },
+    requestId: request.requestId,
+    role: request.role,
+  };
+  await notify([invitee.userId], invite);
   return json(201, { request });
 };
 
@@ -62,12 +75,26 @@ export const updateRequest: Handler = async (req) => {
   if (request.toUserId !== caller.userId) throw forbidden("Only the invited person can respond to this request");
   if (request.status !== "pending") throw conflict(`This request was already ${request.status}`);
 
+  const project = await requireProject(request.projectId);
+  // The person who sent the invitation hears back either way.
+  const answer = (outcome: "accepted" | "rejected"): Promise<void> =>
+    notify([request.fromUserId], {
+      id: `ans_${request.requestId}_${outcome}`,
+      kind: "invite-answer",
+      at: nowIso(),
+      projectId: project.projectId,
+      projectTitle: project.title,
+      actor: { userId: caller.userId, name: caller.name, avatarUrl: caller.avatarUrl },
+      requestId: request.requestId,
+      status: outcome,
+    });
+
   if (status === "rejected") {
     await db.rejectRequest(request.requestId, caller.userId);
+    await answer("rejected");
     return json(200, { request: { ...request, status: "rejected" } });
   }
 
-  const project = await requireProject(request.projectId);
   const teamId = teamIdFor(project.projectId);
   // Projects created before teams existed get their team on first accept.
   await db.createTeamIfMissing({
@@ -79,6 +106,7 @@ export const updateRequest: Handler = async (req) => {
     updatedAt: nowIso(),
   });
   await db.acceptRequest(request, project, teamId, { userId: caller.userId, role: request.role });
+  await answer("accepted");
   const team = await db.getTeam(teamId);
   return json(200, { request: { ...request, status: "accepted" }, team });
 };
