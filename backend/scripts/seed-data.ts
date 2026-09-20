@@ -10,6 +10,7 @@
  * test/demo-story.test.ts asserts this ranking; if you change a demo user, run the tests.
  */
 import type { AiRequirements, Project } from "../src/models/project.js";
+import { suggestOpenings } from "../src/utils/openings.js";
 import type { Team } from "../src/models/team.js";
 import type { ExperienceLevel, User } from "../src/models/user.js";
 
@@ -108,6 +109,12 @@ export const DEMO_PROJECTS: Project[] = PROJECT_SEEDS.map(([projectId, ownerId, 
   requiredSkills: analysis.skills,
   preferredSkills: [],
   requiredRoles: analysis.roles,
+  // Roles the idea is looking for, with whoever has already taken one.
+  openings: suggestOpenings(analysis.roles, analysis.skills).map((opening) => ({
+    ...opening,
+    openingId: `o_${projectId}_${opening.role.toLowerCase().replace(/[^a-z]+/g, "-")}`,
+    filledBy: extra.filter(([, role]) => role === opening.role).map(([userId]) => userId),
+  })),
   teamSize,
   currentTeamSize: 1 + extra.length,
   location: DEMO_USERS.find((u) => u.userId === ownerId)!.location,

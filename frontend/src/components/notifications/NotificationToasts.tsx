@@ -10,6 +10,7 @@ const ACTION: Record<Notification["kind"], string> = {
   message: "Open the room →",
   call: "Join the call →",
   invite: "See the invitation →",
+  application: "See who applied →",
   "invite-answer": "Open the team →",
 };
 
@@ -17,6 +18,7 @@ const ACCENT: Record<Notification["kind"], string> = {
   message: "bg-mint",
   call: "bg-tomato",
   invite: "bg-mustard",
+  application: "bg-lilac",
   "invite-answer": "bg-lilac",
 };
 

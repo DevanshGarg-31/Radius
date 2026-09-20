@@ -14,6 +14,7 @@ import { AccountMenu } from "./AccountMenu";
 export const INVITATIONS_CHANGED = "radius:invitations-changed";
 
 const LINKS = [
+  { href: "/ideas", label: "Ideas" },
   { href: "/discover", label: "Discover" },
   { href: "/projects", label: "Projects" },
   { href: "/invitations", label: "Invitations" },

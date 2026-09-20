@@ -1,8 +1,9 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2, Context } from "aws-lambda";
+import { getIdea, listIdeas } from "./handlers/ideas.js";
 import { getMatches } from "./handlers/matches.js";
-import { analyzeProject, createProject, getProject, listProjects } from "./handlers/projects.js";
+import { analyzeProject, createProject, getProject, listProjects, setOpenings } from "./handlers/projects.js";
 import { health } from "./handlers/health.js";
-import { createRequest, listProjectRequests, updateRequest } from "./handlers/requests.js";
+import { applyToProject, createRequest, listProjectRequests, updateRequest } from "./handlers/requests.js";
 import { listNotifications } from "./handlers/notifications.js";
 import { getRoom, handleWebSocket, joinCall, listMessages, sendMessage } from "./handlers/room.js";
 import { createTeam, getTeam, getTeamGaps } from "./handlers/teams.js";
@@ -14,6 +15,9 @@ import { errorFields, log, setLogContext } from "./utils/logger.js";
 
 export const router = new Router()
   .get("/health", health)
+  // Public: the idea board can be read without signing in.
+  .get("/ideas", listIdeas)
+  .get("/ideas/:projectId", getIdea)
   .get("/me", getMe)
   .post("/me/profile", createMyProfile)
   .get("/users", listUsers)
@@ -25,6 +29,8 @@ export const router = new Router()
   .get("/projects/:projectId", getProject)
   .post("/projects/:projectId/analyze", analyzeProject)
   .get("/projects/:projectId/matches", getMatches)
+  .put("/projects/:projectId/openings", setOpenings)
+  .post("/projects/:projectId/applications", applyToProject)
   .post("/projects/:projectId/requests", createRequest)
   .get("/projects/:projectId/requests", listProjectRequests)
   .put("/requests/:requestId", updateRequest)

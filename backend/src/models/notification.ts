@@ -1,6 +1,7 @@
 /**
  * Something that happened in one of your projects while you were elsewhere in
- * the app: a chat message, a call, an invitation, or an answer to one.
+ * the app: a chat message, a call, an invitation, someone applying to join,
+ * or an answer to either.
  *
  * Notifications are not stored. They are pushed to whoever is online and
  * rebuilt from messages, teams and requests when a page loads (GET /notifications).
@@ -26,6 +27,7 @@ export type Notification =
   | (Common & { kind: "message"; text: string })
   | (Common & { kind: "call"; startedAt: string })
   | (Common & { kind: "invite"; requestId: string; role: string })
+  | (Common & { kind: "application"; requestId: string; role: string })
   | (Common & { kind: "invite-answer"; requestId: string; status: "accepted" | "rejected" });
 
 export type NotificationKind = Notification["kind"];

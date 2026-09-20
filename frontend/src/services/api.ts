@@ -58,6 +58,44 @@ export interface Project {
   updatedAt: string;
 }
 
+/** A role an idea is looking for, as its founder sees it. */
+export interface Opening {
+  openingId: string;
+  role: string;
+  count: number;
+  skills: string[];
+  filledBy: string[];
+}
+
+/** The same role as a visitor sees it: how many places, how many taken. */
+export interface PublicOpening {
+  openingId: string;
+  role: string;
+  skills: string[];
+  count: number;
+  taken: number;
+}
+
+/** A published idea on the public board. */
+export interface Idea {
+  projectId: string;
+  title: string;
+  description: string;
+  category: string;
+  location: string;
+  remote: boolean;
+  createdAt: string;
+  spotsLeft: number;
+  openings: PublicOpening[];
+  owner?: Pick<UserSummary, "userId" | "name" | "username" | "avatarUrl">;
+}
+
+export interface IdeaDetail extends Idea {
+  requiredSkills: string[];
+  teamSize: number;
+  currentTeamSize: number;
+}
+
 export interface Analysis {
   projectId: string;
   category: string;
@@ -66,6 +104,8 @@ export interface Analysis {
   requirements: string[];
   topics: string[];
   source: AiSource;
+  /** Roles suggested from the description, for the founder to edit. */
+  openings: Opening[];
 }
 
 export interface Match extends UserSummary {
@@ -94,7 +134,11 @@ export interface CollaborationRequest {
   requestId: string;
   projectId: string;
   fromUserId: string;
+  /** Always the person who would join, however it started. */
   toUserId: string;
+  /** "owner" is an invitation the candidate answers; "applicant" is an application the founder answers. */
+  initiatedBy: "owner" | "applicant";
+  openingId?: string;
   message: string;
   role: string;
   status: RequestStatus;
@@ -186,6 +230,7 @@ export type Notification =
   | (NotificationBase & { kind: "message"; text: string })
   | (NotificationBase & { kind: "call"; startedAt: string })
   | (NotificationBase & { kind: "invite"; requestId: string; role: string })
+  | (NotificationBase & { kind: "application"; requestId: string; role: string })
   | (NotificationBase & { kind: "invite-answer"; requestId: string; status: "accepted" | "rejected" });
 
 export class ApiError extends Error {
@@ -243,12 +288,22 @@ export const api = {
     return request<{ projects: Project[] }>("GET", `/projects${qs ? `?${qs}` : ""}`);
   },
   getProject: (projectId: string) => request<{ project: Project; owner?: UserSummary }>("GET", `/projects/${projectId}`),
-  createProject: (input: { title: string; description: string; teamSize?: number; location?: string; remote?: boolean }) =>
+  listIdeas: (filter: { q?: string; role?: string; skill?: string; category?: string; remote?: boolean } = {}) => {
+    const qs = new URLSearchParams(Object.entries(filter).filter(([, v]) => v).map(([k, v]) => [k, String(v)])).toString();
+    return request<{ ideas: Idea[]; roles: string[]; categories: string[] }>("GET", `/ideas${qs ? `?${qs}` : ""}`);
+  },
+  getIdea: (projectId: string) => request<{ idea: IdeaDetail; team: Array<UserSummary & { role: string }> }>("GET", `/ideas/${projectId}`),
+  setOpenings: (projectId: string, openings: Array<{ openingId?: string; role: string; count: number; skills: string[] }>) =>
+    request<{ openings: Opening[] }>("PUT", `/projects/${projectId}/openings`, { openings }),
+  applyToProject: (projectId: string, input: { openingId: string; message?: string }) =>
+    request<{ request: CollaborationRequest }>("POST", `/projects/${projectId}/applications`, input),
+
+  createProject: (input: { title: string; description: string; teamSize?: number; location?: string; remote?: boolean; openings?: Array<{ role: string; count: number; skills: string[] }> }) =>
     request<{ projectId: string; title: string; project: Project }>("POST", "/projects", input),
   analyzeProject: (projectId: string) => request<Analysis>("POST", `/projects/${projectId}/analyze`),
   getMatches: (projectId: string) => request<MatchesResponse>("GET", `/projects/${projectId}/matches`),
 
-  invite: (projectId: string, input: { toUserId: string; message?: string; role?: string }) => request<{ request: CollaborationRequest }>("POST", `/projects/${projectId}/requests`, input),
+  invite: (projectId: string, input: { toUserId: string; message?: string; role?: string; openingId?: string }) => request<{ request: CollaborationRequest }>("POST", `/projects/${projectId}/requests`, input),
   projectRequests: (projectId: string) => request<{ requests: Array<CollaborationRequest & { toUser?: UserSummary }> }>("GET", `/projects/${projectId}/requests`),
   respond: (requestId: string, status: "accepted" | "rejected") => request<{ request: CollaborationRequest; team?: Team }>("PUT", `/requests/${requestId}`, { status }),
 

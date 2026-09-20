@@ -10,6 +10,7 @@ const ICONS: Record<Notification["kind"], string> = {
   message: "💬",
   call: "📹",
   invite: "✉️",
+  application: "🙋",
   "invite-answer": "🤝",
 };
 

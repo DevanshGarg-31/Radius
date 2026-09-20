@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import { ApplicationList } from "@/components/ideas/ApplicationList";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { InviteModal } from "@/components/people/InviteModal";
 import { MatchDetail } from "@/components/people/MatchDetail";
@@ -64,6 +65,8 @@ function MatchesInner() {
             )}
           </div>
         </div>
+
+        {isOwner && <ApplicationList projectId={p.projectId} onTeamChanged={() => matches.reload()} />}
 
         {focus && (
           <div className="mb-6 flex animate-rise items-center justify-between gap-4 rounded-card border-[2.5px] border-ink bg-mustard px-5 py-3 shadow-brutal-sm">

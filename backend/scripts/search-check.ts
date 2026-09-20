@@ -25,6 +25,7 @@ const demoProject: Project = {
   requiredSkills: analysis.skills,
   preferredSkills: [],
   requiredRoles: analysis.roles,
+  openings: [],
   teamSize: 4,
   currentTeamSize: 1,
   location: founder.location,

@@ -67,6 +67,11 @@ export const memoryStore: Omit<typeof dynamo, "INDEXES"> = {
     if (p) p.explanationCache = clone(cache);
   },
 
+  saveOpenings: async (projectId: string, openings) => {
+    const p = projects.get(projectId);
+    if (p) Object.assign(p, { openings: clone(openings), updatedAt: nowIso() });
+  },
+
   getTeam: async (teamId) => clone(teams.get(teamId)),
   putTeam: async (team) => void teams.set(team.teamId, clone(team)),
   createTeamIfMissing: async (team) => {
@@ -96,7 +101,7 @@ export const memoryStore: Omit<typeof dynamo, "INDEXES"> = {
     if (!r || r.status !== "pending" || r.toUserId !== toUserId) throw conflict("This request is no longer pending");
     Object.assign(r, { status: "rejected", updatedAt: nowIso() });
   },
-  acceptRequest: async (request: CollaborationRequest, project: Project, teamId: string, role: TeamRole) => {
+  acceptRequest: async (request: CollaborationRequest, project: Project, teamId: string, role: TeamRole, openingIndex?: number) => {
     const r = requests.get(request.requestId);
     const team = teams.get(teamId);
     const p = projects.get(project.projectId);
@@ -108,6 +113,7 @@ export const memoryStore: Omit<typeof dynamo, "INDEXES"> = {
     team.members.push(request.toUserId);
     team.roles.push(clone(role));
     team.updatedAt = now;
+    if (openingIndex !== undefined && p.openings[openingIndex]) p.openings[openingIndex].filledBy.push(request.toUserId);
     p.currentTeamSize += 1;
     if (p.currentTeamSize >= p.teamSize) p.status = "full";
     p.updatedAt = now;
