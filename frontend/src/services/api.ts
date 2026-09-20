@@ -161,7 +161,32 @@ export interface CallJoin {
 }
 
 /** Pushed over the WebSocket to everyone in a team room. */
-export type RoomEvent = { type: "message"; message: ChatMessage } | { type: "call"; status: "started"; startedBy: string; startedAt: string };
+export type RoomEvent =
+  | { type: "message"; message: ChatMessage }
+  | { type: "call"; status: "started"; startedBy: string; startedAt: string }
+  | { type: "notification"; notification: Notification };
+
+/** Who caused a notification. */
+export interface NotificationActor {
+  userId: string;
+  name: string;
+  avatarUrl: string;
+}
+
+interface NotificationBase {
+  id: string;
+  at: string;
+  projectId: string;
+  projectTitle: string;
+  actor: NotificationActor;
+}
+
+/** Something that happened in one of your projects while you were elsewhere. */
+export type Notification =
+  | (NotificationBase & { kind: "message"; text: string })
+  | (NotificationBase & { kind: "call"; startedAt: string })
+  | (NotificationBase & { kind: "invite"; requestId: string; role: string })
+  | (NotificationBase & { kind: "invite-answer"; requestId: string; status: "accepted" | "rejected" });
 
 export class ApiError extends Error {
   constructor(
@@ -238,4 +263,6 @@ export const api = {
   messagesAfter: (projectId: string, after?: string) => request<{ messages: ChatMessage[] }>("GET", `/projects/${projectId}/messages${after ? `?after=${encodeURIComponent(after)}` : ""}`),
   sendMessage: (projectId: string, text: string) => request<{ message: ChatMessage }>("POST", `/projects/${projectId}/messages`, { text }),
   joinCall: (projectId: string) => request<CallJoin>("POST", `/projects/${projectId}/call`),
+
+  listNotifications: (since?: string) => request<{ notifications: Notification[] }>("GET", `/notifications${since ? `?since=${encodeURIComponent(since)}` : ""}`),
 };

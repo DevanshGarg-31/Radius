@@ -3,8 +3,10 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { Navbar } from "@/components/layout/Navbar";
+import { NotificationToasts } from "@/components/notifications/NotificationToasts";
 import { LoadingState } from "@/components/ui/States";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { NotificationsProvider } from "@/lib/notifications";
 import { useSession } from "@/lib/session";
 
 /**
@@ -32,7 +34,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <>
+    <NotificationsProvider>
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-btn focus:bg-surface focus:px-4 focus:py-2 focus:shadow-lift">
         Skip to content
       </a>
@@ -40,6 +42,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <main id="main" className="pb-24">
         {children}
       </main>
-    </>
+      <NotificationToasts />
+    </NotificationsProvider>
   );
 }

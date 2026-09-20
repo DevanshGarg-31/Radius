@@ -9,3 +9,9 @@ export const requestIdFor = (projectId: string, toUserId: string): string => `r_
 
 /** One team per project. */
 export const teamIdFor = (projectId: string): string => `t_${projectId}`;
+
+/**
+ * Open connections are grouped by channel: a project id for people sitting in
+ * that team room, or this for someone's own notifications anywhere in the app.
+ */
+export const userChannel = (userId: string): string => `user#${userId}`;
